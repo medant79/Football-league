@@ -59,6 +59,7 @@ CREATE TABLE Statystyki_zawodnika (
     ilosc_asyst NUMBER,
     ilosc_zoltych_kartek NUMBER,
     ilosc_czerwonych_kartek NUMBER,
+    ilosc_meczy NUMBER,
     CONSTRAINT fk_statystyki_zawodnika FOREIGN KEY (id_zawodnika) REFERENCES Zawodnicy(id_zawodnika)
 );
 
@@ -109,14 +110,15 @@ CREATE OR REPLACE PROCEDURE dodaj_statystyki (
     p_gole IN NUMBER,
     p_asysty IN NUMBER,
     p_zolte IN NUMBER,
-    p_czerwone IN NUMBER
+    p_czerwone IN NUMBER,
+    p_ilosc_meczy IN NUMBER
 ) AS
 BEGIN
     INSERT INTO Statystyki_zawodnika (
-        id_statystyk, id_zawodnika, ilosc_goli, ilosc_asyst, ilosc_zoltych_kartek, ilosc_czerwonych_kartek
+        id_statystyk, id_zawodnika, ilosc_goli, ilosc_asyst, ilosc_zoltych_kartek, ilosc_czerwonych_kartek, ilosc_meczy
     )
     VALUES (
-        seq_statystyki.NEXTVAL, p_id_zawodnika, p_gole, p_asysty, p_zolte, p_czerwone
+        seq_statystyki.NEXTVAL, p_id_zawodnika, p_gole, p_asysty, p_zolte, p_czerwone, p_ilosc_meczy
     );
 END;
 
@@ -131,9 +133,6 @@ select * from menadzer;
 select * from klub;
 select * from zawodnicy;
 select * from Statystyki_zawodnika;
-
-ALTER TABLE Statystyki_zawodnika
-ADD ilosc_meczy NUMBER DEFAULT 0;
 
 CREATE OR REPLACE FUNCTION srednia_goli_na_mecz(p_id_zawodnika IN NUMBER)
 RETURN NUMBER IS
@@ -204,26 +203,3 @@ BEGIN
 END;
 
 SELECT srednia_goli_na_mecz(1) AS srednia FROM dual;
-
-CREATE OR REPLACE PROCEDURE dodaj_statystyki(
-    p_id_zawodnika IN NUMBER,
-    p_ilosc_goli IN NUMBER,
-    p_ilosc_asyst IN NUMBER,
-    p_ilosc_zoltych_kartek IN NUMBER,
-    p_ilosc_czerwonych_kartek IN NUMBER,
-    p_ilosc_meczy IN NUMBER DEFAULT 0
-)
-IS
-    v_id_statystyk NUMBER;
-BEGIN
-    SELECT NVL(MAX(id_statystyk), 0) + 1 INTO v_id_statystyk FROM Statystyki_zawodnika;
-
-    INSERT INTO Statystyki_zawodnika (
-        id_statystyk, id_zawodnika, ilosc_goli, ilosc_asyst, 
-        ilosc_zoltych_kartek, ilosc_czerwonych_kartek, ilosc_meczy
-    ) VALUES (
-        v_id_statystyk, p_id_zawodnika, p_ilosc_goli, p_ilosc_asyst, 
-        p_ilosc_zoltych_kartek, p_ilosc_czerwonych_kartek, p_ilosc_meczy
-    );
-END;
-

@@ -1,0 +1,43 @@
+CREATE TABLE Mecze (
+    id_meczu INT IDENTITY(1,1) PRIMARY KEY,
+    data_meczu DATE NOT NULL,
+    godzina TIME NOT NULL,
+    id_gospodarza INT NOT NULL,  -- odwołanie do KLUB z Oracla (brak FK)
+    id_goscia INT NOT NULL,      -- odwołanie do KLUB z Oracla
+    id_stadionu INT NULL,        -- odwołanie do stadionu z Excela
+    wynik NVARCHAR(20) NULL
+);
+
+-- Tabela WYDARZENIA MECZOWE
+CREATE TABLE WydarzeniaMeczowe (
+    id_wydarzenia INT IDENTITY(1,1) PRIMARY KEY,
+    id_meczu INT NOT NULL,
+    minuta INT NOT NULL,
+    typ_wydarzenia NVARCHAR(50) NOT NULL,  -- np. gol, faul, kartka
+    id_zawodnika INT NULL,                 -- odwołanie do Oracla (ZAWODNIK)
+    dodatkowe_info NVARCHAR(255) NULL,
+
+    FOREIGN KEY (id_meczu) REFERENCES Mecze(id_meczu)
+);
+
+SQL Server Zdalny – tabele: Sedziowie, MeczeSedziowie
+
+-- Tabela SĘDZIOWIE
+CREATE TABLE Sedziowie (
+    id_sedziego INT IDENTITY(1,1) PRIMARY KEY,
+    imie NVARCHAR(50) NOT NULL,
+    nazwisko NVARCHAR(50) NOT NULL,
+    kraj NVARCHAR(50) NOT NULL,
+    poziom_sedziowania NVARCHAR(50) NULL  -- np. międzynarodowy, krajowy
+);
+
+-- Tabela przypisująca SĘDZIÓW do MECZÓW
+CREATE TABLE MeczeSedziowie (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    id_meczu INT NOT NULL,         -- odnosi się do MECZE z SQL lokalnego (brak FK)
+    id_sedziego INT NOT NULL,      -- lokalny FK
+
+    rola NVARCHAR(50) NOT NULL,    -- np. główny, liniowy, techniczny
+
+    FOREIGN KEY (id_sedziego) REFERENCES Sedziowie(id_sedziego)
+);

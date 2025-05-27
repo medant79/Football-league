@@ -52,6 +52,29 @@ BEGIN
     END IF;
 END;
 
+CREATE OR REPLACE TRIGGER trg_auto_statystyki_ai
+AFTER INSERT ON Zawodnicy
+FOR EACH ROW
+BEGIN
+    INSERT INTO Statystyki_zawodnika (
+        id_statystyk,
+        id_zawodnika,
+        ilosc_goli,
+        ilosc_asyst,
+        ilosc_zoltych_kartek,
+        ilosc_czerwonych_kartek,
+        ilosc_meczy
+    ) VALUES (
+        seq_statystyki.NEXTVAL,
+        :NEW.id_zawodnika,
+        0,
+        0,
+        0,
+        0,
+        0
+    );
+END;
+
 CREATE TABLE Statystyki_zawodnika (
     id_statystyk NUMBER PRIMARY KEY,
     id_zawodnika NUMBER UNIQUE,

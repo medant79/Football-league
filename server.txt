@@ -30,6 +30,53 @@ CREATE TABLE Stadiony (
 ALTER TABLE Mecze
 ADD CONSTRAINT fk_mecze_stadiony FOREIGN KEY (id_stadionu) REFERENCES Stadiony(id_stadionu);
 
+EXEC sp_addlinkedserver 
+    @server = 'ORACLE_LINK',
+    @srvproduct = 'Oracle',
+    @provider = 'OraOLEDB.Oracle',
+    @datasrc = 'PD19C';
+go
+EXEC sp_addlinkedsrvlogin 
+    @rmtsrvname = 'ORACLE_LINK', 
+    @useself = 'false', 
+    @locallogin = NULL, 
+    @rmtuser = 'SYSTEM', 
+    @rmtpassword = '12345';
+
+go
+EXEC sp_addlinkedsrvlogin 
+    @rmtsrvname = 'ORACLE_LINK', 
+    @useself = 'false', 
+    @locallogin = NULL, 
+    @rmtuser = 'APP_USER', 
+    @rmtpassword = 'strongpassword';
+
+go
+
+CREATE PROCEDURE DodajMecz
+    @data_meczu DATE,
+    @godzina TIME,
+    @id_gospodarza INT,
+    @id_goscia INT,
+    @id_stadionu INT = NULL,
+    @wynik NVARCHAR(20) = NULL
+AS
+BEGIN
+    INSERT INTO Mecze (data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik)
+    VALUES (@data_meczu, @godzina, @id_gospodarza, @id_goscia, @id_stadionu, @wynik);
+END;
+
+go
+
+CREATE FUNCTION LiczbaMeczyNaStadionie(@id_stadionu INT)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @liczba INT;
+    SELECT @liczba = COUNT(*) FROM Mecze WHERE id_stadionu = @id_stadionu;
+    RETURN @liczba;
+END;
+
 SQL Server Zdalny – tabele: Sedziowie, MeczeSedziowie
 
 -- Tabela SĘDZIOWIE
@@ -51,3 +98,14 @@ CREATE TABLE MeczeSedziowie (
 
     FOREIGN KEY (id_sedziego) REFERENCES Sedziowie(id_sedziego)
 );
+
+CREATE PROCEDURE DodajSedziego
+    @imie NVARCHAR(50),
+    @nazwisko NVARCHAR(50),
+    @kraj NVARCHAR(50),
+    @poziom NVARCHAR(50) = NULL
+AS
+BEGIN
+    INSERT INTO Sedziowie (imie, nazwisko, kraj, poziom_sedziowania)
+    VALUES (@imie, @nazwisko, @kraj, @poziom);
+END;

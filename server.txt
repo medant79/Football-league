@@ -20,6 +20,16 @@ CREATE TABLE WydarzeniaMeczowe (
     FOREIGN KEY (id_meczu) REFERENCES Mecze(id_meczu)
 );
 
+CREATE TABLE Stadiony (
+    id_stadionu INT IDENTITY(1,1) PRIMARY KEY,
+    nazwa NVARCHAR(100) NOT NULL,
+    miasto NVARCHAR(100) NOT NULL,
+    pojemnosc INT
+);
+
+ALTER TABLE Mecze
+ADD CONSTRAINT fk_mecze_stadiony FOREIGN KEY (id_stadionu) REFERENCES Stadiony(id_stadionu);
+
 SQL Server Zdalny – tabele: Sedziowie, MeczeSedziowie
 
 -- Tabela SĘDZIOWIE

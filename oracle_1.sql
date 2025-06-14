@@ -55,6 +55,28 @@ BEGIN
     END IF;
 END;
 
+CREATE TABLE Statystyki_zawodnika (
+    id_statystyk NUMBER PRIMARY KEY,
+    id_zawodnika NUMBER UNIQUE,
+    ilosc_goli NUMBER,
+    ilosc_asyst NUMBER,
+    ilosc_zoltych_kartek NUMBER,
+    ilosc_czerwonych_kartek NUMBER,
+    ilosc_meczy NUMBER,
+    CONSTRAINT fk_statystyki_zawodnika FOREIGN KEY (id_zawodnika) REFERENCES Zawodnicy(id_zawodnika)
+);
+
+CREATE SEQUENCE seq_statystyki START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER trg_statystyki_bi
+BEFORE INSERT ON Statystyki_zawodnika
+FOR EACH ROW
+BEGIN
+    IF :NEW.id_statystyk IS NULL THEN
+        SELECT seq_statystyki.NEXTVAL INTO :NEW.id_statystyk FROM dual;
+    END IF;
+END;
+
 CREATE OR REPLACE TRIGGER trg_auto_statystyki_ai
 AFTER INSERT ON Zawodnicy
 FOR EACH ROW
@@ -76,28 +98,6 @@ BEGIN
         0,
         0
     );
-END;
-
-CREATE TABLE Statystyki_zawodnika (
-    id_statystyk NUMBER PRIMARY KEY,
-    id_zawodnika NUMBER UNIQUE,
-    ilosc_goli NUMBER,
-    ilosc_asyst NUMBER,
-    ilosc_zoltych_kartek NUMBER,
-    ilosc_czerwonych_kartek NUMBER,
-    ilosc_meczy NUMBER,
-    CONSTRAINT fk_statystyki_zawodnika FOREIGN KEY (id_zawodnika) REFERENCES Zawodnicy(id_zawodnika)
-);
-
-CREATE SEQUENCE seq_statystyki START WITH 1 INCREMENT BY 1;
-
-CREATE OR REPLACE TRIGGER trg_statystyki_bi
-BEFORE INSERT ON Statystyki_zawodnika
-FOR EACH ROW
-BEGIN
-    IF :NEW.id_statystyk IS NULL THEN
-        SELECT seq_statystyki.NEXTVAL INTO :NEW.id_statystyk FROM dual;
-    END IF;
 END;
 
 --procedury

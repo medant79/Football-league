@@ -1,23 +1,3 @@
-CREATE TABLE Menadzer (
-    id_menadzera NUMBER PRIMARY KEY,
-    imie VARCHAR2(100),
-    nazwisko VARCHAR2(100),
-    data_urodzenia DATE
-    id_klubu NUMBER,
-    CONSTRAINT fk_menadzer_klub FOREIGN KEY (id_klubu) REFERENCES Klub(id_klubu)
-);
-
-CREATE SEQUENCE seq_menadzer START WITH 1 INCREMENT BY 1;
-
-CREATE OR REPLACE TRIGGER trg_menadzer_bi
-BEFORE INSERT ON Menadzer
-FOR EACH ROW
-BEGIN
-    IF :NEW.id_menadzera IS NULL THEN
-        SELECT seq_menadzer.NEXTVAL INTO :NEW.id_menadzera FROM dual;
-    END IF;
-END;
-
 CREATE TABLE Klub (
     id_klubu NUMBER PRIMARY KEY,
     nazwa VARCHAR2(100),
@@ -32,6 +12,26 @@ FOR EACH ROW
 BEGIN
     IF :NEW.id_klubu IS NULL THEN
         SELECT seq_klub.NEXTVAL INTO :NEW.id_klubu FROM dual;
+    END IF;
+END;
+
+CREATE TABLE Menadzer (
+    id_menadzera NUMBER PRIMARY KEY,
+    imie VARCHAR2(100),
+    nazwisko VARCHAR2(100),
+    data_urodzenia DATE,
+    id_klubu NUMBER,
+    CONSTRAINT fk_menadzer_klub FOREIGN KEY (id_klubu) REFERENCES Klub(id_klubu)
+);
+
+CREATE SEQUENCE seq_menadzer START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER trg_menadzer_bi
+BEFORE INSERT ON Menadzer
+FOR EACH ROW
+BEGIN
+    IF :NEW.id_menadzera IS NULL THEN
+        SELECT seq_menadzer.NEXTVAL INTO :NEW.id_menadzera FROM dual;
     END IF;
 END;
 

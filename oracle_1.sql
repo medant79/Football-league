@@ -1,7 +1,8 @@
 CREATE TABLE Menadzer (
     id_menadzera NUMBER PRIMARY KEY,
     imie VARCHAR2(100),
-    nazwisko VARCHAR2(100)
+    nazwisko VARCHAR2(100),
+    data_urodzenia DATE
 );
 
 CREATE SEQUENCE seq_menadzer START WITH 1 INCREMENT BY 1;
@@ -39,6 +40,7 @@ CREATE TABLE Zawodnicy (
     imie VARCHAR2(100),
     nazwisko VARCHAR2(100),
     id_klubu NUMBER,
+    data_urodzenia DATE,
     CONSTRAINT fk_zawodnik_klub FOREIGN KEY (id_klubu) REFERENCES Klub(id_klubu)
 );
 

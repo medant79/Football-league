@@ -24,7 +24,8 @@ CREATE TABLE Stadiony (
     id_stadionu INT IDENTITY(1,1) PRIMARY KEY,
     nazwa NVARCHAR(100) NOT NULL,
     miasto NVARCHAR(100) NOT NULL,
-    pojemnosc INT
+    pojemnosc INT,
+    status BIT NOT NULL DEFAULT 1
 );
 
 ALTER TABLE Mecze
@@ -75,37 +76,4 @@ BEGIN
     DECLARE @liczba INT;
     SELECT @liczba = COUNT(*) FROM Mecze WHERE id_stadionu = @id_stadionu;
     RETURN @liczba;
-END;
-
-SQL Server Zdalny – tabele: Sedziowie, MeczeSedziowie
-
--- Tabela SĘDZIOWIE
-CREATE TABLE Sedziowie (
-    id_sedziego INT IDENTITY(1,1) PRIMARY KEY,
-    imie NVARCHAR(50) NOT NULL,
-    nazwisko NVARCHAR(50) NOT NULL,
-    kraj NVARCHAR(50) NOT NULL,
-    poziom_sedziowania NVARCHAR(50) NULL  -- np. międzynarodowy, krajowy
-);
-
--- Tabela przypisująca SĘDZIÓW do MECZÓW
-CREATE TABLE MeczeSedziowie (
-    id INT IDENTITY(1,1) PRIMARY KEY,
-    id_meczu INT NOT NULL,         -- odnosi się do MECZE z SQL lokalnego (brak FK)
-    id_sedziego INT NOT NULL,      -- lokalny FK
-
-    rola NVARCHAR(50) NOT NULL,    -- np. główny, liniowy, techniczny
-
-    FOREIGN KEY (id_sedziego) REFERENCES Sedziowie(id_sedziego)
-);
-
-CREATE PROCEDURE DodajSedziego
-    @imie NVARCHAR(50),
-    @nazwisko NVARCHAR(50),
-    @kraj NVARCHAR(50),
-    @poziom NVARCHAR(50) = NULL
-AS
-BEGIN
-    INSERT INTO Sedziowie (imie, nazwisko, kraj, poziom_sedziowania)
-    VALUES (@imie, @nazwisko, @kraj, @poziom);
 END;

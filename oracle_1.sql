@@ -167,12 +167,14 @@ CREATE OR REPLACE PROCEDURE przenies_zawodnika(
     p_data_ur DATE,
     p_nazwa_klubu VARCHAR2
 ) IS
-    id_k NUMBER;
+    v_id_klubu NUMBER;
 BEGIN
-    SELECT id_klubu INTO id_k FROM Klub WHERE nazwa = p_nazwa_klubu;
+    SELECT id_klubu INTO v_id_klubu
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
 
-    UPDATE Zawodnik
-    SET id_klubu = id_k
+    UPDATE Zawodnicy
+    SET id_klubu = v_id_klubu
     WHERE imie = p_imie AND nazwisko = p_nazwisko AND data_urodzenia = p_data_ur;
 END;
 

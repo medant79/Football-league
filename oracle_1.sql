@@ -178,21 +178,23 @@ BEGIN
     WHERE imie = p_imie AND nazwisko = p_nazwisko AND data_urodzenia = p_data_ur;
 END;
 
-CREATE OR REPLACE PROCEDURE dodaj_statystyki (
-    p_id_zawodnika IN NUMBER,
-    p_gole IN NUMBER,
-    p_asysty IN NUMBER,
-    p_zolte IN NUMBER,
-    p_czerwone IN NUMBER,
-    p_ilosc_meczy IN NUMBER
-) AS
+CREATE OR REPLACE PROCEDURE aktualizuj_statystyki (
+    p_id_zawodnika NUMBER,
+    p_gole NUMBER,
+    p_asysty NUMBER,
+    p_zolte NUMBER,
+    p_czerwone NUMBER,
+    p_mecze NUMBER
+) IS
 BEGIN
-    INSERT INTO Statystyki_zawodnika (
-        id_statystyk, id_zawodnika, ilosc_goli, ilosc_asyst, ilosc_zoltych_kartek, ilosc_czerwonych_kartek, ilosc_meczy
-    )
-    VALUES (
-        seq_statystyki.NEXTVAL, p_id_zawodnika, p_gole, p_asysty, p_zolte, p_czerwone, p_ilosc_meczy
-    );
+    UPDATE Statystyki_zawodnika
+    SET 
+        ilosc_goli = ilosc_goli + p_gole,
+        ilosc_asyst = ilosc_asyst + p_asysty,
+        ilosc_zoltych_kartek = ilosc_zoltych_kartek + p_zolte,
+        ilosc_czerwonych_kartek = ilosc_czerwonych_kartek + p_czerwone,
+        ilosc_meczy = ilosc_meczy + p_mecze
+    WHERE id_zawodnika = p_id_zawodnika;
 END;
 
 BEGIN

@@ -19,7 +19,8 @@ CREATE TABLE Klub (
     id_klubu NUMBER PRIMARY KEY,
     nazwa VARCHAR2(100),
     id_menadzera NUMBER,
-    CONSTRAINT fk_klub_menadzer FOREIGN KEY (id_menadzera) REFERENCES Menadzer(id_menadzera)
+    CONSTRAINT fk_klub_menadzer FOREIGN KEY (id_menadzera) REFERENCES Menadzer(id_menadzera),
+    CONSTRAINT unikalna_nazwa_klubu UNIQUE (nazwa)
 );
 
 CREATE SEQUENCE seq_klub START WITH 1 INCREMENT BY 1;

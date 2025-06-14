@@ -77,6 +77,8 @@ BEGIN
     END IF;
 END;
 
+--triggery
+
 CREATE OR REPLACE TRIGGER trg_auto_statystyki_ai
 AFTER INSERT ON Zawodnicy
 FOR EACH ROW
@@ -98,6 +100,34 @@ BEGIN
         0,
         0
     );
+END;
+
+CREATE OR REPLACE TRIGGER unikaj_duplikatow_zawodnikow
+BEFORE INSERT ON Zawodnicy
+FOR EACH ROW
+DECLARE
+    cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO cnt FROM Zawodnicy
+    WHERE imie = :NEW.imie AND nazwisko = :NEW.nazwisko AND data_urodzenia = :NEW.data_urodzenia;
+
+    IF cnt > 0 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Taki zawodnik już istnieje!');
+    END IF;
+END;
+
+CREATE OR REPLACE TRIGGER unikaj_duplikatow_menadzerow
+BEFORE INSERT ON Menadzer
+FOR EACH ROW
+DECLARE
+    cnt NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO cnt FROM Menadzer
+    WHERE imie = :NEW.imie AND nazwisko = :NEW.nazwisko AND data_urodzenia = :NEW.data_urodzenia;
+
+    IF cnt > 0 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Taki menadzer już istnieje!');
+    END IF;
 END;
 
 --procedury

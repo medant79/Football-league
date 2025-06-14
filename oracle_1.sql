@@ -103,22 +103,38 @@ END;
 --procedury
 
 CREATE OR REPLACE PROCEDURE dodaj_menadzera(
-    p_imie VARCHAR2,
-    p_nazwisko VARCHAR2,
-    p_data_ur DATE
-) IS
+    p_imie IN VARCHAR2,
+    p_nazwisko IN VARCHAR2,
+    p_data_urodzenia IN DATE,
+    p_nazwa_klubu IN VARCHAR2
+) AS
+    v_id_klubu NUMBER;
 BEGIN
-    INSERT INTO Menadzer(id_menadzera, imie, nazwisko, data_urodzenia)
-    VALUES (seq_menadzer.NEXTVAL, p_imie, p_nazwisko, p_data_ur);
+    SELECT id_klubu INTO v_id_klubu
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
+
+    INSERT INTO Menadzer(id_menadzera, imie, nazwisko, data_urodzenia, id_klubu)
+    VALUES (menadzer_seq.NEXTVAL, p_imie, p_nazwisko, p_data_urodzenia, v_id_klubu);
 END;
 
-CREATE OR REPLACE PROCEDURE dodaj_klub (
-    p_nazwa IN VARCHAR2,
-    p_id_menadzera IN NUMBER
+CREATE OR REPLACE PROCEDURE zmien_klub_menadzera(
+    p_imie IN VARCHAR2,
+    p_nazwisko IN VARCHAR2,
+    p_data_urodzenia IN DATE,
+    p_nowa_nazwa_klubu IN VARCHAR2
 ) AS
+    v_id_klubu NUMBER;
 BEGIN
-    INSERT INTO Klub (id_klubu, nazwa, id_menadzera)
-    VALUES (seq_klub.NEXTVAL, p_nazwa, p_id_menadzera);
+    SELECT id_klubu INTO v_id_klubu
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nowa_nazwa_klubu);
+
+    UPDATE Menadzer
+    SET id_klubu = v_id_klubu
+    WHERE LOWER(imie) = LOWER(p_imie)
+      AND LOWER(nazwisko) = LOWER(p_nazwisko)
+      AND data_urodzenia = p_data_urodzenia;
 END;
 
 CREATE OR REPLACE PROCEDURE dodaj_zawodnika (

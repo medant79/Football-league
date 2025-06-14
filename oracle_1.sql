@@ -3,6 +3,8 @@ CREATE TABLE Menadzer (
     imie VARCHAR2(100),
     nazwisko VARCHAR2(100),
     data_urodzenia DATE
+    id_klubu NUMBER,
+    CONSTRAINT fk_menadzer_klub FOREIGN KEY (id_klubu) REFERENCES Klub(id_klubu)
 );
 
 CREATE SEQUENCE seq_menadzer START WITH 1 INCREMENT BY 1;
@@ -19,8 +21,6 @@ END;
 CREATE TABLE Klub (
     id_klubu NUMBER PRIMARY KEY,
     nazwa VARCHAR2(100),
-    id_menadzera NUMBER,
-    CONSTRAINT fk_klub_menadzer FOREIGN KEY (id_menadzera) REFERENCES Menadzer(id_menadzera),
     CONSTRAINT unikalna_nazwa_klubu UNIQUE (nazwa)
 );
 

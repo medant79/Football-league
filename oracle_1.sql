@@ -123,7 +123,7 @@ BEGIN
     WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
 
     INSERT INTO Menadzer(id_menadzera, imie, nazwisko, data_urodzenia, id_klubu)
-    VALUES (menadzer_seq.NEXTVAL, p_imie, p_nazwisko, p_data_urodzenia, v_id_klubu);
+    VALUES (seq_menadzer.NEXTVAL, p_imie, p_nazwisko, p_data_urodzenia, v_id_klubu);
 END;
 
 CREATE OR REPLACE PROCEDURE zmien_klub_menadzera(

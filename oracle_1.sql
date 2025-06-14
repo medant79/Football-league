@@ -102,6 +102,14 @@ END;
 
 --procedury
 
+CREATE OR REPLACE PROCEDURE dodaj_klub (
+    p_nazwa IN VARCHAR2
+) AS
+BEGIN
+    INSERT INTO Klub (id_klubu, nazwa)
+    VALUES (seq_klub.NEXTVAL, p_nazwa);
+END;
+
 CREATE OR REPLACE PROCEDURE dodaj_menadzera(
     p_imie IN VARCHAR2,
     p_nazwisko IN VARCHAR2,

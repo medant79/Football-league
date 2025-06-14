@@ -227,17 +227,42 @@ BEGIN
     WHERE id_zawodnika = p_id_zawodnika;
 END;
 
+--testy
 BEGIN
-    dodaj_menadzera('Tomek', 'Nowak');
-    dodaj_klub('FC Oracle', 1);
-    dodaj_zawodnika('Pawe?', 'Kowalczyk', 1);
-    dodaj_statystyki(1, 10, 5, 2, 0);
+    dodaj_klub('Real Madrid');
+    dodaj_klub('Barcelona');
+END;
+SELECT * FROM Klub;
+
+BEGIN
+    dodaj_menadzera('Carlo', 'Ancelotti', TO_DATE('1959-06-10','YYYY-MM-DD'), 'Real Madrid');
 END;
 
-select * from menadzer;
-select * from klub;
-select * from zawodnicy;
-select * from Statystyki_zawodnika;
+BEGIN
+    zmien_klub_menadzera('Carlo', 'Ancelotti', TO_DATE('1959-06-10','YYYY-MM-DD'), 'Barcelona');
+END;
+
+SELECT * FROM Menadzer;
+
+BEGIN
+    dodaj_zawodnika('Luka', 'Modric', TO_DATE('1985-09-09','YYYY-MM-DD'), 'Real Madrid');
+END;
+SELECT * FROM Zawodnicy;
+SELECT * FROM Statystyki_zawodnika;
+
+BEGIN
+    przenies_zawodnika('Luka', 'Modric', TO_DATE('1985-09-09','YYYY-MM-DD'), 'Barcelona');
+END;
+
+SELECT * FROM Zawodnicy;
+
+BEGIN
+    aktualizuj_statystyki(1, 2, 1, 1, 0, 1); -- 2 gole, 1 asysta, 1 żółta kartka, 0 czerwonych, 1 mecz
+END;
+
+SELECT * FROM Statystyki_zawodnika;
+
+--funkcje
 
 CREATE OR REPLACE FUNCTION srednia_goli_na_mecz(p_id_zawodnika IN NUMBER)
 RETURN NUMBER IS

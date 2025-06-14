@@ -121,11 +121,31 @@ END;
 CREATE OR REPLACE PROCEDURE dodaj_zawodnika (
     p_imie IN VARCHAR2,
     p_nazwisko IN VARCHAR2,
-    p_id_klubu IN NUMBER
+    p_nazwa_klubu IN VARCHAR2
 ) AS
+    v_id_klubu NUMBER;
 BEGIN
+    SELECT id_klubu INTO v_id_klubu
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
+
     INSERT INTO Zawodnicy (id_zawodnika, imie, nazwisko, id_klubu)
-    VALUES (seq_zawodnik.NEXTVAL, p_imie, p_nazwisko, p_id_klubu);
+    VALUES (seq_zawodnik.NEXTVAL, p_imie, p_nazwisko, v_id_klubu);
+END;
+
+CREATE OR REPLACE PROCEDURE przenies_zawodnika (
+    p_id_zawodnika IN NUMBER,
+    p_nazwa_docelowego_klubu IN VARCHAR2
+) AS
+    v_id_klubu_docelowego NUMBER;
+BEGIN
+    SELECT id_klubu INTO v_id_klubu_docelowego
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nazwa_docelowego_klubu);
+
+    UPDATE Zawodnicy
+    SET id_klubu = v_id_klubu_docelowego
+    WHERE id_zawodnika = p_id_zawodnika;
 END;
 
 CREATE OR REPLACE PROCEDURE dodaj_statystyki (

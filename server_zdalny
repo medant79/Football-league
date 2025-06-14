@@ -1,1 +1,24 @@
+CREATE TABLE Sedziowie (
+    id_sedziego INT IDENTITY(1,1) PRIMARY KEY,
+    imie NVARCHAR(50) NOT NULL,
+    nazwisko NVARCHAR(50) NOT NULL
+);
 
+CREATE TABLE MeczeSedziowie (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    id_meczu INT NOT NULL,
+    id_sedziego INT NOT NULL, 
+    rola NVARCHAR(50) NOT NULL,
+    FOREIGN KEY (id_sedziego) REFERENCES Sedziowie(id_sedziego)
+);
+
+CREATE PROCEDURE DodajSedziego
+    @imie NVARCHAR(50),
+    @nazwisko NVARCHAR(50),
+    @kraj NVARCHAR(50),
+    @poziom NVARCHAR(50) = NULL
+AS
+BEGIN
+    INSERT INTO Sedziowie (imie, nazwisko, kraj, poziom_sedziowania)
+    VALUES (@imie, @nazwisko, @kraj, @poziom);
+END;

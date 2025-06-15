@@ -98,3 +98,21 @@ BEGIN
     SELECT @liczba = COUNT(*) FROM Mecze WHERE id_stadionu = @id_stadionu;
     RETURN @liczba;
 END;
+
+CREATE TRIGGER UnikalnaNazwaStadionu
+ON Stadiony
+INSTEAD OF INSERT
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM inserted i
+        JOIN Stadiony s ON s.nazwa = i.nazwa
+    )
+    BEGIN
+        RAISERROR('Stadion o tej nazwie już istnieje.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Stadiony (nazwa, miasto, pojemnosc, status)
+    SELECT nazwa, miasto, pojemnosc, status FROM inserted;
+END;

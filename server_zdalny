@@ -16,7 +16,7 @@ CREATE TABLE MeczeSedziowie (
 CREATE PROCEDURE DodajSedziego
     @imie NVARCHAR(50),
     @nazwisko NVARCHAR(50),
-    @data_urodzenia DATE,
+    @data_urodzenia DATE
 AS
 BEGIN
     INSERT INTO Sedziowie (imie, nazwisko, data_urodzenia)

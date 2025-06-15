@@ -136,6 +136,65 @@ BEGIN
     SELECT nazwa, miasto, pojemnosc, status FROM inserted;
 END;
 
+CREATE TRIGGER WalidacjaMeczu
+ON Mecze
+INSTEAD OF INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_gospodarza INT;
+    DECLARE @id_goscia INT;
+    DECLARE @wynik NVARCHAR(20);
+    DECLARE @data DATE;
+    DECLARE @godzina TIME;
+
+    SELECT 
+        @id_gospodarza = id_gospodarza,
+        @id_goscia = id_goscia,
+        @wynik = wynik,
+        @data = data_meczu,
+        @godzina = godzina
+    FROM inserted;
+
+    IF @id_gospodarza = @id_goscia
+    BEGIN
+        RAISERROR('Gospodarz i gość nie mogą być tym samym klubem.', 16, 1);
+        RETURN;
+    END
+
+    IF @wynik IS NOT NULL AND @wynik NOT LIKE '[0-9]%:[0-9]%'
+    BEGIN
+        RAISERROR('Niepoprawny format wyniku. Oczekiwany format: liczba:liczba, np. 2:1.', 16, 1);
+        RETURN;
+    END
+
+    IF @wynik IS NOT NULL
+    BEGIN
+        DECLARE @gole1 INT;
+        DECLARE @gole2 INT;
+
+        BEGIN TRY
+            SET @gole1 = CAST(LEFT(@wynik, CHARINDEX(':', @wynik) - 1) AS INT);
+            SET @gole2 = CAST(SUBSTRING(@wynik, CHARINDEX(':', @wynik) + 1, LEN(@wynik)) AS INT);
+
+            IF @gole1 < 0 OR @gole2 < 0
+            BEGIN
+                RAISERROR('Liczba goli nie może być ujemna.', 16, 1);
+                RETURN;
+            END
+        END TRY
+        BEGIN CATCH
+            RAISERROR('Niepoprawny format wyniku (nie udało się sparsować liczby).', 16, 1);
+            RETURN;
+        END CATCH
+    END
+
+    INSERT INTO Mecze (data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik)
+    SELECT data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik
+    FROM inserted;
+END;
+
 --testy
 EXEC DodajStadion @nazwa = 'Narodowy', @miasto = 'Warszawa', @pojemnosc = 58000;
 

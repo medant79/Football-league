@@ -135,3 +135,16 @@ BEGIN
     INSERT INTO Stadiony (nazwa, miasto, pojemnosc, status)
     SELECT nazwa, miasto, pojemnosc, status FROM inserted;
 END;
+
+--testy
+EXEC DodajStadion @nazwa = 'Narodowy', @miasto = 'Warszawa', @pojemnosc = 58000;
+
+EXEC DodajMeczPoNazwach 
+    @data_meczu = '2025-06-20',
+    @godzina = '18:00',
+    @nazwa_gospodarza = 'Barcelona',
+    @nazwa_goscia = 'Real Madrid',
+    @id_stadionu = 1,
+    @wynik = '2:1';
+
+select * from mecze

@@ -75,15 +75,34 @@ BEGIN
     VALUES (@nazwa, @miasto, @pojemnosc, @status);
 END;
 
-CREATE PROCEDURE DodajMecz
+CREATE PROCEDURE DodajMeczPoNazwach
     @data_meczu DATE,
     @godzina TIME,
-    @id_gospodarza INT,
-    @id_goscia INT,
+    @nazwa_gospodarza NVARCHAR(100),
+    @nazwa_goscia NVARCHAR(100),
     @id_stadionu INT = NULL,
     @wynik NVARCHAR(20) = NULL
 AS
 BEGIN
+    DECLARE @id_gospodarza INT;
+    DECLARE @id_goscia INT;
+
+    SELECT @id_gospodarza = id_klubu
+    FROM OPENQUERY(ORACLE_LINK, 
+        'SELECT id_klubu, nazwa FROM SYSTEM.KLUB')
+    WHERE nazwa = @nazwa_gospodarza;
+
+    SELECT @id_goscia = id_klubu
+    FROM OPENQUERY(ORACLE_LINK, 
+        'SELECT id_klubu, nazwa FROM SYSTEM.KLUB')
+    WHERE nazwa = @nazwa_goscia;
+
+    IF @id_gospodarza IS NULL OR @id_goscia IS NULL
+    BEGIN
+        RAISERROR('Nie znaleziono jednego lub obu klubów w Oracle.', 16, 1);
+        RETURN;
+    END
+
     INSERT INTO Mecze (data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik)
     VALUES (@data_meczu, @godzina, @id_gospodarza, @id_goscia, @id_stadionu, @wynik);
 END;

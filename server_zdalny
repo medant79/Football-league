@@ -41,7 +41,7 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO Sedziowie (imie, nazwisko, data_urodzenia, kraj, poziom_sedziowania)
-    SELECT imie, nazwisko, data_urodzenia, kraj, poziom_sedziowania
+    INSERT INTO Sedziowie (imie, nazwisko, data_urodzenia)
+    SELECT imie, nazwisko, data_urodzenia
     FROM inserted;
 END;

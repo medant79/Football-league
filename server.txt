@@ -54,6 +54,27 @@ EXEC sp_addlinkedsrvlogin
 
 go
 
+CREATE PROCEDURE ZmienStatusStadionu
+    @nazwa NVARCHAR(100),
+    @nowy_status BIT
+AS
+BEGIN
+    UPDATE Stadiony
+    SET status = @nowy_status
+    WHERE nazwa = @nazwa;
+END;
+
+CREATE PROCEDURE DodajStadion
+    @nazwa NVARCHAR(100),
+    @miasto NVARCHAR(100),
+    @pojemnosc INT,
+    @status BIT = 1
+AS
+BEGIN
+    INSERT INTO Stadiony (nazwa, miasto, pojemnosc, status)
+    VALUES (@nazwa, @miasto, @pojemnosc, @status);
+END;
+
 CREATE PROCEDURE DodajMecz
     @data_meczu DATE,
     @godzina TIME,

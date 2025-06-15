@@ -227,6 +227,75 @@ BEGIN
     WHERE id_zawodnika = p_id_zawodnika;
 END;
 
+CREATE OR REPLACE PROCEDURE pokaz_zawodnika_i_statystyki (
+    p_imie           IN ZAWODNICY.imie%TYPE,
+    p_nazwisko       IN ZAWODNICY.nazwisko%TYPE,
+    p_data_urodzenia IN ZAWODNICY.data_urodzenia%TYPE
+) AS
+BEGIN
+    FOR rec IN (
+        SELECT z.id_zawodnika, z.imie, z.nazwisko, z.data_urodzenia,
+               s.ilosc_goli, s.ilosc_asyst, s.ilosc_zoltych_kartek, 
+               s.ilosc_czerwonych_kartek, s.ilosc_meczy
+        FROM ZAWODNICY z
+        JOIN STATYSTYKI_ZAWODNIKA s ON z.id_zawodnika = s.id_zawodnika
+        WHERE z.imie = p_imie
+          AND z.nazwisko = p_nazwisko
+          AND z.data_urodzenia = p_data_urodzenia
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('Zawodnik: ' || rec.imie || ' ' || rec.nazwisko);
+        DBMS_OUTPUT.PUT_LINE('Data urodzenia: ' || TO_CHAR(rec.data_urodzenia, 'YYYY-MM-DD'));
+        DBMS_OUTPUT.PUT_LINE('Mecze: ' || rec.ilosc_meczy || 
+                             ', Gole: ' || rec.ilosc_goli || 
+                             ', Asysty: ' || rec.ilosc_asyst);
+        DBMS_OUTPUT.PUT_LINE('Żółte kartki: ' || rec.ilosc_zoltych_kartek || 
+                             ', Czerwone kartki: ' || rec.ilosc_czerwonych_kartek);
+    END LOOP;
+END;
+
+CREATE OR REPLACE PROCEDURE pokaz_zawodnikow_klubu (
+    p_nazwa_klubu IN KLUB.nazwa%TYPE
+) AS
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Klub: ' || p_nazwa_klubu);
+    FOR rec IN (
+        SELECT z.imie, z.nazwisko, z.data_urodzenia
+        FROM ZAWODNICY z
+        JOIN KLUB k ON z.id_klubu = k.id_klubu
+        WHERE k.nazwa = p_nazwa_klubu
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('Zawodnik: ' || rec.imie || ' ' || rec.nazwisko ||
+                             ', Data urodzenia: ' || TO_CHAR(rec.data_urodzenia));
+    END LOOP;
+END;
+
+CREATE OR REPLACE PROCEDURE pokaz_menadzera_klubu (
+    p_nazwa_klubu IN KLUB.nazwa%TYPE
+) AS
+BEGIN
+    FOR rec IN (
+        SELECT m.imie, m.nazwisko, m.data_urodzenia, k.nazwa as nazwa_klubu
+        FROM MENADZER m
+        JOIN KLUB k ON m.id_klubu = k.id_klubu
+        WHERE k.nazwa = p_nazwa_klubu
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('Klub: ' || rec.nazwa_klubu || ', Menadżer: ' || rec.imie || ' ' || rec.nazwisko ||
+                             ', Data urodzenia: ' || TO_CHAR(rec.data_urodzenia));
+    END LOOP;
+END;
+
+BEGIN
+    pokaz_zawodnika_i_statystyki('Luka', 'Modric', TO_DATE('1985-09-09', 'YYYY-MM-DD'));
+END;
+
+BEGIN
+    pokaz_zawodnikow_klubu('Barcelona');
+END;
+
+BEGIN
+    pokaz_menadzera_klubu('Barcelona');
+END;
+
 --testy
 BEGIN
     dodaj_klub('Real Madrid');

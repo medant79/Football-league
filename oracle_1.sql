@@ -332,6 +332,24 @@ END;
 SELECT * FROM Statystyki_zawodnika;
 
 --funkcje
+CREATE OR REPLACE FUNCTION detect_id (
+    p_imie IN VARCHAR2,
+    p_nazwisko IN VARCHAR2,
+    p_data_urodzenia IN DATE
+) RETURN NUMBER IS
+    v_id_zawodnika NUMBER;
+BEGIN
+    SELECT id_zawodnika INTO v_id_zawodnika
+    FROM Zawodnicy
+    WHERE LOWER(imie) = LOWER(p_imie)
+      AND LOWER(nazwisko) = LOWER(p_nazwisko)
+      AND data_urodzenia = p_data_urodzenia;
+
+    RETURN v_id_zawodnika;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20004, 'Zawodnik nie został znaleziony.');
+END;
 
 CREATE OR REPLACE FUNCTION srednia_goli_na_mecz(p_id_zawodnika IN NUMBER)
 RETURN NUMBER IS

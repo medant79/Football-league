@@ -112,15 +112,15 @@ CREATE PROCEDURE DodajWydarzenieMeczowe
     @id_meczu INT,
     @minuta INT,
     @typ_wydarzenia NVARCHAR(50),
-    @imie NVARCHAR(50) = NULL,
-    @nazwisko NVARCHAR(50) = NULL,
-    @data_urodzenia DATE = NULL,
+    @imie NVARCHAR(50),
+    @nazwisko NVARCHAR(50),
+    @data_urodzenia DATE,
     @dodatkowe_info NVARCHAR(255) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @id_zawodnika INT = NULL;
+    DECLARE @id_zawodnika INT;
 
     IF @minuta < 0 OR @minuta > 120
     BEGIN
@@ -137,37 +137,34 @@ BEGIN
         RETURN;
     END
 
-    IF @typ_wydarzenia <> 'koniec'
+    IF @imie IS NULL OR @nazwisko IS NULL OR @data_urodzenia IS NULL
     BEGIN
-        IF @imie IS NULL OR @nazwisko IS NULL OR @data_urodzenia IS NULL
+        RAISERROR('Brak danych zawodnika.', 16, 1);
+        RETURN;
+    END
+
+    BEGIN TRY
+        DECLARE @result TABLE (id_zawodnika INT);
+        DECLARE @data_str VARCHAR(10) = CONVERT(VARCHAR(10), @data_urodzenia, 120);
+
+        INSERT INTO @result (id_zawodnika)
+        EXEC (
+            'SELECT SYSTEM.detect_id(?, ?, TO_DATE(?, ''YYYY-MM-DD'')) AS id_zawodnika FROM DUAL',
+            @imie, @nazwisko, @data_str
+        ) AT ORACLE_LINK;
+
+        SELECT @id_zawodnika = id_zawodnika FROM @result;
+
+        IF @id_zawodnika IS NULL
         BEGIN
-            RAISERROR('Brak danych zawodnika dla wybranego typu wydarzenia.', 16, 1);
+            RAISERROR('Nie znaleziono zawodnika w bazie Oracle.', 16, 1);
             RETURN;
         END
-
-        BEGIN TRY
-            DECLARE @result TABLE (id_zawodnika INT);
-            DECLARE @data_str VARCHAR(10) = CONVERT(VARCHAR(10), @data_urodzenia, 120);
-
-            INSERT INTO @result (id_zawodnika)
-            EXEC (
-                'SELECT SYSTEM.detect_id(?, ?, TO_DATE(?, ''YYYY-MM-DD'')) AS id_zawodnika FROM DUAL',
-                @imie, @nazwisko, @data_str
-            ) AT ORACLE_LINK;
-
-            SELECT @id_zawodnika = id_zawodnika FROM @result;
-
-            IF @id_zawodnika IS NULL
-            BEGIN
-                RAISERROR('Nie znaleziono zawodnika w bazie Oracle.', 16, 1);
-                RETURN;
-            END
-        END TRY
-        BEGIN CATCH
-            RAISERROR('Nie udało się pobrać ID zawodnika z Oracle.', 16, 1);
-            RETURN;
-        END CATCH
-    END
+    END TRY
+    BEGIN CATCH
+        RAISERROR('Nie udało się pobrać ID zawodnika z Oracle.', 16, 1);
+        RETURN;
+    END CATCH
 
     INSERT INTO WydarzeniaMeczowe (id_meczu, minuta, typ_wydarzenia, id_zawodnika, dodatkowe_info)
     VALUES (@id_meczu, @minuta, @typ_wydarzenia, @id_zawodnika, @dodatkowe_info);
@@ -259,6 +256,53 @@ BEGIN
     INSERT INTO Mecze (data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik)
     SELECT data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik
     FROM inserted;
+END;
+
+CREATE OR ALTER TRIGGER trg_UpdateStats_AfterInsert
+ON WydarzeniaMeczowe
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_zawodnika INT,
+            @typ_wydarzenia NVARCHAR(50),
+            @gole INT = 0,
+            @asysty INT = 0,
+            @zolte INT = 0,
+            @czerwone INT = 0,
+            @mecze INT = 0,
+            @sql NVARCHAR(MAX);
+
+    SELECT TOP 1
+        @id_zawodnika = id_zawodnika,
+        @typ_wydarzenia = typ_wydarzenia
+    FROM inserted;
+
+    IF @id_zawodnika IS NULL
+    BEGIN
+        RAISERROR('Brak id_zawodnika w wydarzeniu', 16, 1);
+        RETURN;
+    END
+
+    IF @typ_wydarzenia = 'gol' SET @gole = 1;
+    ELSE IF @typ_wydarzenia = 'asysta' SET @asysty = 1;
+    ELSE IF @typ_wydarzenia = 'zolta kartka' SET @zolte = 1;
+    ELSE IF @typ_wydarzenia = 'czerwona kartka' SET @czerwone = 1;
+    ELSE IF @typ_wydarzenia = 'koniec' SET @mecze = 1;
+
+    SET @sql = '
+    BEGIN
+      SYSTEM.aktualizuj_statystyki(' 
+        + CAST(@id_zawodnika AS NVARCHAR) + ', ' 
+        + CAST(@gole AS NVARCHAR) + ', ' 
+        + CAST(@asysty AS NVARCHAR) + ', ' 
+        + CAST(@zolte AS NVARCHAR) + ', ' 
+        + CAST(@czerwone AS NVARCHAR) + ', ' 
+        + CAST(@mecze AS NVARCHAR) + ');
+    END;';
+
+    EXEC (@sql) AT ORACLE_LINK;
 END;
 
 --testy

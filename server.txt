@@ -31,6 +31,180 @@ CREATE UNIQUE INDEX UX_WydarzeniaMeczowe_Koniec
 ON WydarzeniaMeczowe(id_meczu)
 WHERE typ_wydarzenia = 'koniec';
 
+CREATE TRIGGER WalidacjaMeczu
+ON Mecze
+INSTEAD OF INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_gospodarza INT;
+    DECLARE @id_goscia INT;
+    DECLARE @wynik NVARCHAR(20);
+    DECLARE @data DATE;
+    DECLARE @godzina TIME;
+
+    SELECT 
+        @id_gospodarza = id_gospodarza,
+        @id_goscia = id_goscia,
+        @wynik = wynik,
+        @data = data_meczu,
+        @godzina = godzina
+    FROM inserted;
+
+    IF @id_gospodarza = @id_goscia
+    BEGIN
+        RAISERROR('Gospodarz i gość nie mogą być tym samym klubem.', 16, 1);
+        RETURN;
+    END
+
+    IF @wynik IS NOT NULL AND @wynik NOT LIKE '[0-9]%:[0-9]%'
+    BEGIN
+        RAISERROR('Niepoprawny format wyniku. Oczekiwany format: liczba:liczba, np. 2:1.', 16, 1);
+        RETURN;
+    END
+
+    IF @wynik IS NOT NULL
+    BEGIN
+        DECLARE @gole1 INT;
+        DECLARE @gole2 INT;
+
+        BEGIN TRY
+            SET @gole1 = CAST(LEFT(@wynik, CHARINDEX(':', @wynik) - 1) AS INT);
+            SET @gole2 = CAST(SUBSTRING(@wynik, CHARINDEX(':', @wynik) + 1, LEN(@wynik)) AS INT);
+
+            IF @gole1 < 0 OR @gole2 < 0
+            BEGIN
+                RAISERROR('Liczba goli nie może być ujemna.', 16, 1);
+                RETURN;
+            END
+        END TRY
+        BEGIN CATCH
+            RAISERROR('Niepoprawny format wyniku (nie udało się sparsować liczby).', 16, 1);
+            RETURN;
+        END CATCH
+    END
+
+    IF EXISTS (
+    SELECT 1
+    FROM Mecze
+    WHERE data_meczu = @data
+      AND (
+          id_gospodarza = @id_gospodarza OR
+          id_goscia = @id_gospodarza OR
+          id_gospodarza = @id_goscia OR
+          id_goscia = @id_goscia
+      )
+    )
+    BEGIN
+        RAISERROR('Jedna z drużyn ma już zaplanowany mecz tego dnia.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Mecze (data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik)
+    SELECT data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik
+    FROM inserted;
+END;
+
+CREATE OR ALTER TRIGGER trg_AktualizujMeczePoDodaniu
+ON Mecze
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_gospodarza INT, @id_goscia INT;
+
+    SELECT TOP 1
+        @id_gospodarza = id_gospodarza,
+        @id_goscia = id_goscia
+    FROM inserted;
+
+    DECLARE @Zawodnicy TABLE (id_zawodnika INT);
+
+    DECLARE @sql NVARCHAR(MAX);
+
+    SET @sql = '
+        SELECT id_zawodnika 
+        FROM OPENQUERY(ORACLE_LINK, 
+            ''SELECT id_zawodnika FROM SYSTEM.Zawodnicy WHERE id_klubu = ' + CAST(@id_gospodarza AS NVARCHAR) + ''')';
+
+    INSERT INTO @Zawodnicy (id_zawodnika)
+    EXEC(@sql);
+
+    SET @sql = '
+        SELECT id_zawodnika 
+        FROM OPENQUERY(ORACLE_LINK, 
+            ''SELECT id_zawodnika FROM SYSTEM.Zawodnicy WHERE id_klubu = ' + CAST(@id_goscia AS NVARCHAR) + ''')';
+
+    INSERT INTO @Zawodnicy (id_zawodnika)
+    EXEC(@sql);
+
+    DECLARE @id INT;
+    DECLARE @sql_call NVARCHAR(MAX);
+
+    DECLARE zawodnicy_cursor CURSOR FOR
+        SELECT id_zawodnika FROM @Zawodnicy;
+
+    OPEN zawodnicy_cursor;
+    FETCH NEXT FROM zawodnicy_cursor INTO @id;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @sql_call = '
+        BEGIN
+            SYSTEM.aktualizuj_statystyki(' + CAST(@id AS NVARCHAR) + ', 0, 0, 0, 0, 1);
+        END;';
+        EXEC (@sql_call) AT ORACLE_LINK;
+
+        FETCH NEXT FROM zawodnicy_cursor INTO @id;
+    END
+
+    CLOSE zawodnicy_cursor;
+    DEALLOCATE zawodnicy_cursor;
+END;
+
+CREATE OR ALTER TRIGGER trg_UpdateStats_AfterInsert
+ON WydarzeniaMeczowe
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_zawodnika INT,
+            @typ_wydarzenia NVARCHAR(50),
+            @gole INT = 0,
+            @asysty INT = 0,
+            @zolte INT = 0,
+            @czerwone INT = 0;
+
+    SELECT TOP 1
+        @id_zawodnika = id_zawodnika,
+        @typ_wydarzenia = typ_wydarzenia
+    FROM inserted;
+
+    IF @id_zawodnika IS NULL OR @typ_wydarzenia = 'koniec'
+        RETURN;
+
+    IF @typ_wydarzenia = 'gol' SET @gole = 1;
+    ELSE IF @typ_wydarzenia = 'asysta' SET @asysty = 1;
+    ELSE IF @typ_wydarzenia = 'zolta kartka' SET @zolte = 1;
+    ELSE IF @typ_wydarzenia = 'czerwona kartka' SET @czerwone = 1;
+
+    DECLARE @sql NVARCHAR(MAX);
+    SET @sql = '
+    BEGIN
+        SYSTEM.aktualizuj_statystyki(' 
+        + CAST(@id_zawodnika AS NVARCHAR) + ', ' 
+        + CAST(@gole AS NVARCHAR) + ', ' 
+        + CAST(@asysty AS NVARCHAR) + ', ' 
+        + CAST(@zolte AS NVARCHAR) + ', ' 
+        + CAST(@czerwone AS NVARCHAR) + ', 0);
+    END;';
+
+    EXEC (@sql) AT ORACLE_LINK;
+END;
+
 CREATE PROCEDURE WyswietlKluby
 AS
 BEGIN
@@ -214,13 +388,13 @@ BEGIN
     VALUES (@data_meczu, @godzina, @id_gospodarza, @id_goscia, @id_stadionu, @wynik);
 END;
 
-EXEC DodajMeczPoNazwach '2025-08-01', '18:00', 'Real Madrid', 'Barcelona', 1, NULL;
-EXEC DodajMeczPoNazwach '2025-08-02', '20:00', 'Bayern', 'Arsenal', 3, NULL;
-EXEC DodajMeczPoNazwach '2025-08-03', '17:30', 'Manchester City', 'Inter Milan', 5, NULL;
-EXEC DodajMeczPoNazwach '2025-08-04', '19:00', 'Arsenal', 'Real Madrid', 4, NULL;
-EXEC DodajMeczPoNazwach '2025-08-05', '21:00', 'Barcelona', 'Manchester City', 7, NULL;
-EXEC DodajMeczPoNazwach '2025-08-06', '18:30', 'Inter Milan', 'Bayern', 6, NULL;
-EXEC DodajMeczPoNazwach '2025-08-07', '20:45', 'Real Madrid', 'Manchester City', 1, NULL;
+EXEC DodajMeczPoNazwach '2025-08-01', '18:00', 'Real Madrid', 'Barcelona', 1, '1:3';
+EXEC DodajMeczPoNazwach '2025-08-02', '20:00', 'Bayern', 'Arsenal', 3, '2:1';
+EXEC DodajMeczPoNazwach '2025-08-03', '17:30', 'Manchester City', 'Inter Milan', 5, '2:2';
+EXEC DodajMeczPoNazwach '2025-08-04', '19:00', 'Arsenal', 'Real Madrid', 4, '1:1';
+EXEC DodajMeczPoNazwach '2025-08-05', '21:00', 'Barcelona', 'Manchester City', 7, '5:0';
+EXEC DodajMeczPoNazwach '2025-08-06', '18:30', 'Inter Milan', 'Bayern', 6, '0:0';
+EXEC DodajMeczPoNazwach '2025-08-07', '20:45', 'Real Madrid', 'Manchester City', 1, '4:4';
 
 select * from Mecze;
 
@@ -537,180 +711,6 @@ BEGIN
 
     INSERT INTO Stadiony (nazwa, miasto, pojemnosc, status)
     SELECT nazwa, miasto, pojemnosc, status FROM inserted;
-END;
-
-CREATE TRIGGER WalidacjaMeczu
-ON Mecze
-INSTEAD OF INSERT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @id_gospodarza INT;
-    DECLARE @id_goscia INT;
-    DECLARE @wynik NVARCHAR(20);
-    DECLARE @data DATE;
-    DECLARE @godzina TIME;
-
-    SELECT 
-        @id_gospodarza = id_gospodarza,
-        @id_goscia = id_goscia,
-        @wynik = wynik,
-        @data = data_meczu,
-        @godzina = godzina
-    FROM inserted;
-
-    IF @id_gospodarza = @id_goscia
-    BEGIN
-        RAISERROR('Gospodarz i gość nie mogą być tym samym klubem.', 16, 1);
-        RETURN;
-    END
-
-    IF @wynik IS NOT NULL AND @wynik NOT LIKE '[0-9]%:[0-9]%'
-    BEGIN
-        RAISERROR('Niepoprawny format wyniku. Oczekiwany format: liczba:liczba, np. 2:1.', 16, 1);
-        RETURN;
-    END
-
-    IF @wynik IS NOT NULL
-    BEGIN
-        DECLARE @gole1 INT;
-        DECLARE @gole2 INT;
-
-        BEGIN TRY
-            SET @gole1 = CAST(LEFT(@wynik, CHARINDEX(':', @wynik) - 1) AS INT);
-            SET @gole2 = CAST(SUBSTRING(@wynik, CHARINDEX(':', @wynik) + 1, LEN(@wynik)) AS INT);
-
-            IF @gole1 < 0 OR @gole2 < 0
-            BEGIN
-                RAISERROR('Liczba goli nie może być ujemna.', 16, 1);
-                RETURN;
-            END
-        END TRY
-        BEGIN CATCH
-            RAISERROR('Niepoprawny format wyniku (nie udało się sparsować liczby).', 16, 1);
-            RETURN;
-        END CATCH
-    END
-
-    IF EXISTS (
-    SELECT 1
-    FROM Mecze
-    WHERE data_meczu = @data
-      AND (
-          id_gospodarza = @id_gospodarza OR
-          id_goscia = @id_gospodarza OR
-          id_gospodarza = @id_goscia OR
-          id_goscia = @id_goscia
-      )
-    )
-    BEGIN
-        RAISERROR('Jedna z drużyn ma już zaplanowany mecz tego dnia.', 16, 1);
-        RETURN;
-    END
-
-    INSERT INTO Mecze (data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik)
-    SELECT data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik
-    FROM inserted;
-END;
-
-CREATE OR ALTER TRIGGER trg_UpdateStats_AfterInsert
-ON WydarzeniaMeczowe
-AFTER INSERT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @id_zawodnika INT,
-            @typ_wydarzenia NVARCHAR(50),
-            @gole INT = 0,
-            @asysty INT = 0,
-            @zolte INT = 0,
-            @czerwone INT = 0;
-
-    SELECT TOP 1
-        @id_zawodnika = id_zawodnika,
-        @typ_wydarzenia = typ_wydarzenia
-    FROM inserted;
-
-    IF @id_zawodnika IS NULL OR @typ_wydarzenia = 'koniec'
-        RETURN;
-
-    IF @typ_wydarzenia = 'gol' SET @gole = 1;
-    ELSE IF @typ_wydarzenia = 'asysta' SET @asysty = 1;
-    ELSE IF @typ_wydarzenia = 'zolta kartka' SET @zolte = 1;
-    ELSE IF @typ_wydarzenia = 'czerwona kartka' SET @czerwone = 1;
-
-    DECLARE @sql NVARCHAR(MAX);
-    SET @sql = '
-    BEGIN
-        SYSTEM.aktualizuj_statystyki(' 
-        + CAST(@id_zawodnika AS NVARCHAR) + ', ' 
-        + CAST(@gole AS NVARCHAR) + ', ' 
-        + CAST(@asysty AS NVARCHAR) + ', ' 
-        + CAST(@zolte AS NVARCHAR) + ', ' 
-        + CAST(@czerwone AS NVARCHAR) + ', 0);
-    END;';
-
-    EXEC (@sql) AT ORACLE_LINK;
-END;
-
-CREATE OR ALTER TRIGGER trg_AktualizujMeczePoDodaniu
-ON Mecze
-AFTER INSERT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @id_gospodarza INT, @id_goscia INT;
-
-    SELECT TOP 1
-        @id_gospodarza = id_gospodarza,
-        @id_goscia = id_goscia
-    FROM inserted;
-
-    DECLARE @Zawodnicy TABLE (id_zawodnika INT);
-
-    DECLARE @sql NVARCHAR(MAX);
-
-    SET @sql = '
-        SELECT id_zawodnika 
-        FROM OPENQUERY(ORACLE_LINK, 
-            ''SELECT id_zawodnika FROM SYSTEM.Zawodnicy WHERE id_klubu = ' + CAST(@id_gospodarza AS NVARCHAR) + ''')';
-
-    INSERT INTO @Zawodnicy (id_zawodnika)
-    EXEC(@sql);
-
-    SET @sql = '
-        SELECT id_zawodnika 
-        FROM OPENQUERY(ORACLE_LINK, 
-            ''SELECT id_zawodnika FROM SYSTEM.Zawodnicy WHERE id_klubu = ' + CAST(@id_goscia AS NVARCHAR) + ''')';
-
-    INSERT INTO @Zawodnicy (id_zawodnika)
-    EXEC(@sql);
-
-    DECLARE @id INT;
-    DECLARE @sql_call NVARCHAR(MAX);
-
-    DECLARE zawodnicy_cursor CURSOR FOR
-        SELECT id_zawodnika FROM @Zawodnicy;
-
-    OPEN zawodnicy_cursor;
-    FETCH NEXT FROM zawodnicy_cursor INTO @id;
-
-    WHILE @@FETCH_STATUS = 0
-    BEGIN
-        SET @sql_call = '
-        BEGIN
-            SYSTEM.aktualizuj_statystyki(' + CAST(@id AS NVARCHAR) + ', 0, 0, 0, 0, 1);
-        END;';
-        EXEC (@sql_call) AT ORACLE_LINK;
-
-        FETCH NEXT FROM zawodnicy_cursor INTO @id;
-    END
-
-    CLOSE zawodnicy_cursor;
-    DEALLOCATE zawodnicy_cursor;
 END;
 
 --testy

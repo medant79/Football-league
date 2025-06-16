@@ -161,6 +161,8 @@ END;
 
 EXEC ZmienStatusStadionu @nazwa = 'Camp Nou', @nowy_status = 0;
 
+select * from Stadiony;
+
 CREATE PROCEDURE DodajMeczPoNazwach
     @data_meczu DATE,
     @godzina TIME,
@@ -189,9 +191,38 @@ BEGIN
         RETURN;
     END
 
+    IF @id_stadionu IS NOT NULL
+    BEGIN
+        SELECT @status_stadionu = status
+        FROM Stadiony
+        WHERE id_stadionu = @id_stadionu;
+
+        IF @status_stadionu IS NULL
+        BEGIN
+            RAISERROR('Nie znaleziono stadionu o podanym ID.', 16, 1);
+            RETURN;
+        END
+
+        IF @status_stadionu = 0
+        BEGIN
+            RAISERROR('Stadion jest zamknięty i nie można dodać meczu.', 16, 1);
+            RETURN;
+        END
+    END
+
     INSERT INTO Mecze (data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik)
     VALUES (@data_meczu, @godzina, @id_gospodarza, @id_goscia, @id_stadionu, @wynik);
 END;
+
+EXEC DodajMeczPoNazwach '2025-08-01', '18:00', 'Real Madrid', 'Barcelona', 1, NULL;
+EXEC DodajMeczPoNazwach '2025-08-02', '20:00', 'Bayern', 'Arsenal', 3, NULL;
+EXEC DodajMeczPoNazwach '2025-08-03', '17:30', 'Manchester City', 'Inter Milan', 5, NULL;
+EXEC DodajMeczPoNazwach '2025-08-04', '19:00', 'Arsenal', 'Real Madrid', 4, NULL;
+EXEC DodajMeczPoNazwach '2025-08-05', '21:00', 'Barcelona', 'Manchester City', 7, NULL;
+EXEC DodajMeczPoNazwach '2025-08-06', '18:30', 'Inter Milan', 'Bayern', 6, NULL;
+EXEC DodajMeczPoNazwach '2025-08-07', '20:45', 'Real Madrid', 'Manchester City', 1, NULL;
+
+select * from Mecze;
 
 CREATE PROCEDURE DodajWydarzenieMeczowe
     @id_meczu INT,

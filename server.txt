@@ -40,6 +40,8 @@ BEGIN
     FROM OPENQUERY(ORACLE_LINK, 'SELECT * FROM SYSTEM.Klub');
 END;
 
+exec WyswietlKluby;
+
 CREATE PROCEDURE WyswietlInfoOKlubie
     @nazwa_klubu NVARCHAR(100)
 AS
@@ -75,6 +77,9 @@ BEGIN
     EXEC (@sql_zawodnicy);
 END;
 
+exec WyswietlInfoOKlubie
+	@nazwa_klubu = 'Barcelona';
+
 CREATE PROCEDURE wywolaj_przeniesienie_zawodnika
     @imie NVARCHAR(100),
     @nazwisko NVARCHAR(100),
@@ -93,6 +98,12 @@ BEGIN
 
     EXECUTE (@sql) AT ORACLE_LINK
 END
+
+EXEC wywolaj_przeniesienie_zawodnika 
+    @imie = 'Luka',
+    @nazwisko = 'Modric',
+    @data_urodzenia = '1985-09-09',
+    @nazwa_klubu = 'Inter';
 
 CREATE PROCEDURE wywolaj_zmiane_klubu_menadzera
     @imie NVARCHAR(100),
@@ -113,15 +124,11 @@ BEGIN
     EXECUTE (@sql) AT ORACLE_LINK
 END
 
-CREATE PROCEDURE ZmienStatusStadionu
-    @nazwa NVARCHAR(100),
-    @nowy_status BIT
-AS
-BEGIN
-    UPDATE Stadiony
-    SET status = @nowy_status
-    WHERE nazwa = @nazwa;
-END;
+EXEC wywolaj_zmiane_klubu_menadzera
+    @imie = 'Carlo',
+    @nazwisko = 'Ancelotti',
+    @data_urodzenia = '1959-06-10',
+    @nazwa_klubu = 'Inter';
 
 CREATE PROCEDURE DodajStadion
     @nazwa NVARCHAR(100),
@@ -133,6 +140,26 @@ BEGIN
     INSERT INTO Stadiony (nazwa, miasto, pojemnosc, status)
     VALUES (@nazwa, @miasto, @pojemnosc, @status);
 END;
+
+EXEC DodajStadion 'Santiago Bernabéu', 'Madryt', 81044, 1;
+EXEC DodajStadion 'Camp Nou', 'Barcelona', 99354, 1;
+EXEC DodajStadion 'Allianz Arena', 'Monachium', 75000, 1;
+EXEC DodajStadion 'Emirates Stadium', 'Londyn', 60260, 1;
+EXEC DodajStadion 'Etihad Stadium', 'Manchester', 53400, 1;
+EXEC DodajStadion 'San Siro', 'Mediolan', 80018, 1;
+EXEC DodajStadion 'Old Trafford', 'Manchester', 74879, 1;
+
+CREATE PROCEDURE ZmienStatusStadionu
+    @nazwa NVARCHAR(100),
+    @nowy_status BIT
+AS
+BEGIN
+    UPDATE Stadiony
+    SET status = @nowy_status
+    WHERE nazwa = @nazwa;
+END;
+
+EXEC ZmienStatusStadionu @nazwa = 'Camp Nou', @nowy_status = 0;
 
 CREATE PROCEDURE DodajMeczPoNazwach
     @data_meczu DATE,

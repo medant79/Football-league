@@ -23,6 +23,15 @@ BEGIN
     VALUES (@imie, @nazwisko, @data_urodzenia);
 END;
 
+EXEC DodajSedziego 'Piotr', 'Nowak', '1980-05-14';
+EXEC DodajSedziego 'Marek', 'Kowalski', '1975-11-22';
+EXEC DodajSedziego 'Tomasz', 'Wiśniewski', '1988-03-30';
+EXEC DodajSedziego 'Andrzej', 'Lewandowski', '1982-07-08';
+EXEC DodajSedziego 'Krzysztof', 'Zieliński', '1979-01-19';
+EXEC DodajSedziego 'Marcin', 'Kamiński', '1990-12-05';
+
+SELECT * FROM Sedziowie;
+
 CREATE OR ALTER TRIGGER ZapobiezDuplikatowiSedziego
 ON Sedziowie
 INSTEAD OF INSERT

@@ -67,6 +67,41 @@ BEGIN
     FROM OPENQUERY(ORACLE_LINK, 'SELECT * FROM SYSTEM.Klub');
 END;
 
+CREATE PROCEDURE WyswietlInfoOKlubie
+    @nazwa_klubu NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @sql_menadzer NVARCHAR(MAX);
+    DECLARE @zapytanie_menadzer NVARCHAR(MAX);
+
+    SET @zapytanie_menadzer = '
+        SELECT k.nazwa AS nazwa_klubu, m.imie, m.nazwisko, m.data_urodzenia
+        FROM SYSTEM.MENADZER m
+        JOIN SYSTEM.KLUB k ON m.id_klubu = k.id_klubu
+        WHERE k.nazwa = ''' + REPLACE(@nazwa_klubu, '''', '''''') + '''';
+
+    SET @sql_menadzer = 'SELECT * FROM OPENQUERY(ORACLE_LINK, ''' + REPLACE(@zapytanie_menadzer, '''', '''''') + ''')';
+
+    PRINT '--- Menadżer klubu: ' + @nazwa_klubu;
+    EXEC (@sql_menadzer);
+
+    DECLARE @sql_zawodnicy NVARCHAR(MAX);
+    DECLARE @zapytanie_zawodnicy NVARCHAR(MAX);
+
+    SET @zapytanie_zawodnicy = '
+        SELECT z.imie, z.nazwisko, z.data_urodzenia
+        FROM SYSTEM.ZAWODNICY z
+        JOIN SYSTEM.KLUB k ON z.id_klubu = k.id_klubu
+        WHERE k.nazwa = ''' + REPLACE(@nazwa_klubu, '''', '''''') + '''';
+
+    SET @sql_zawodnicy = 'SELECT * FROM OPENQUERY(ORACLE_LINK, ''' + REPLACE(@zapytanie_zawodnicy, '''', '''''') + ''')';
+
+    PRINT '--- Zawodnicy klubu: ' + @nazwa_klubu;
+    EXEC (@sql_zawodnicy);
+END;
+
 CREATE PROCEDURE ZmienStatusStadionu
     @nazwa NVARCHAR(100),
     @nowy_status BIT

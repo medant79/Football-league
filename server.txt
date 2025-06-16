@@ -31,29 +31,6 @@ CREATE UNIQUE INDEX UX_WydarzeniaMeczowe_Koniec
 ON WydarzeniaMeczowe(id_meczu)
 WHERE typ_wydarzenia = 'koniec';
 
-EXEC sp_addlinkedserver 
-    @server = 'ORACLE_LINK',
-    @srvproduct = 'Oracle',
-    @provider = 'OraOLEDB.Oracle',
-    @datasrc = 'PD19C';
-go
-EXEC sp_addlinkedsrvlogin 
-    @rmtsrvname = 'ORACLE_LINK', 
-    @useself = 'false', 
-    @locallogin = NULL, 
-    @rmtuser = 'SYSTEM', 
-    @rmtpassword = '12345';
-
-go
-EXEC sp_addlinkedsrvlogin 
-    @rmtsrvname = 'ORACLE_LINK', 
-    @useself = 'false', 
-    @locallogin = NULL, 
-    @rmtuser = 'APP_USER', 
-    @rmtpassword = 'strongpassword';
-
-go
-
 CREATE PROCEDURE WyswietlKluby
 AS
 BEGIN

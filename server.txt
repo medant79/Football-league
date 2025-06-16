@@ -58,6 +58,15 @@ EXEC sp_addlinkedsrvlogin
 
 go
 
+CREATE PROCEDURE WyswietlKluby
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT *
+    FROM OPENQUERY(ORACLE_LINK, 'SELECT * FROM SYSTEM.Klub');
+END;
+
 CREATE PROCEDURE ZmienStatusStadionu
     @nazwa NVARCHAR(100),
     @nowy_status BIT

@@ -375,6 +375,110 @@ BEGIN
 END;
 GO
 
+exec PokazWszystkichSedziow
+go
+CREATE OR ALTER PROCEDURE dbo.PokazSzczegolyMeczuRozproszone
+    @nazwa_gospodarza  NVARCHAR(100),
+    @nazwa_goscia      NVARCHAR(100),
+    @data_meczu        DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_gosp INT, @id_gosc INT, @id_meczu INT;
+
+    SELECT @id_gosp = id_klubu
+    FROM OPENQUERY(ORACLE_LINK,'SELECT id_klubu,nazwa FROM SYSTEM.KLUB')
+    WHERE nazwa = @nazwa_gospodarza;
+
+    SELECT @id_gosc = id_klubu
+    FROM OPENQUERY(ORACLE_LINK,'SELECT id_klubu,nazwa FROM SYSTEM.KLUB')
+    WHERE nazwa = @nazwa_goscia;
+
+    IF @id_gosp IS NULL OR @id_gosc IS NULL
+    BEGIN
+        RAISERROR('Drużyny nie znalezione w Oracle.',16,1); RETURN;
+    END
+
+    SELECT TOP 1 @id_meczu = id_meczu
+    FROM dbo.Mecze
+    WHERE id_gospodarza = @id_gosp
+      AND id_goscia     = @id_gosc
+      AND data_meczu    = @data_meczu;
+
+    IF @id_meczu IS NULL
+    BEGIN
+        RAISERROR('Mecz nie istnieje lokalnie.',16,1); RETURN;
+    END
+
+    DECLARE @stadion NVARCHAR(100);
+    SELECT @stadion = nazwa
+    FROM dbo.Stadiony
+    WHERE id_stadionu = (SELECT id_stadionu FROM dbo.Mecze WHERE id_meczu = @id_meczu);
+
+    PRINT '=== Szczegóły meczu ===';
+    PRINT 'Data: ' + CONVERT(VARCHAR(10), @data_meczu, 120)
+          + ' | Gospodarz: ' + @nazwa_gospodarza
+          + ' | Gość: ' + @nazwa_goscia
+          + ' | Stadion: ' + ISNULL(@stadion,'brak');
+    PRINT '-----------------------';
+
+    PRINT 'Wydarzenia:';
+    DECLARE ev_cursor CURSOR FOR
+        SELECT minuta, typ_wydarzenia, ISNULL(dodatkowe_info,'')
+        FROM dbo.WydarzeniaMeczowe
+        WHERE id_meczu = @id_meczu
+        ORDER BY minuta;
+    OPEN ev_cursor;
+    DECLARE @min INT, @typ NVARCHAR(50), @info NVARCHAR(255);
+    FETCH NEXT FROM ev_cursor INTO @min,@typ,@info;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        PRINT '  ['+RIGHT('00'+CAST(@min AS VARCHAR),2)+'] ' 
+              + @typ + CASE WHEN @info<>'' THEN ' ('+@info+')' ELSE '' END;
+        FETCH NEXT FROM ev_cursor INTO @min,@typ,@info;
+    END
+    CLOSE ev_cursor; DEALLOCATE ev_cursor;
+
+    PRINT '-----------------------';
+
+    PRINT 'Sędziowie:';
+
+	DECLARE @sql NVARCHAR(MAX) = '
+		SELECT s.imie + '' '' + s.nazwisko + '' ('' + CONVERT(VARCHAR(10), s.data_urodzenia, 120) + '')'' AS opis
+		FROM dbo.Sedziowie s
+		JOIN dbo.MeczeSedziowie ms ON s.id_sedziego = ms.id_sedziego
+		WHERE ms.id_meczu = ' + CAST(@id_meczu AS NVARCHAR(10)) + '
+		ORDER BY ms.id
+	';
+
+	CREATE TABLE #Sedziowie (opis NVARCHAR(200));
+
+	INSERT INTO #Sedziowie (opis)
+	EXEC (@sql) AT DOCKER_SQL;
+
+	DECLARE ref_cursor CURSOR FOR SELECT opis FROM #Sedziowie;
+
+	OPEN ref_cursor;
+
+	DECLARE @line NVARCHAR(200);
+
+	FETCH NEXT FROM ref_cursor INTO @line;
+
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		PRINT '  - ' + @line;
+		FETCH NEXT FROM ref_cursor INTO @line;
+	END
+
+	CLOSE ref_cursor;
+	DEALLOCATE ref_cursor;
+
+	DROP TABLE #Sedziowie;
+
+	PRINT '=======================';
+END;
+
 go
 
 CREATE FUNCTION LiczbaMeczyNaStadionie(@id_stadionu INT)
@@ -595,3 +699,8 @@ exec DodajSedziegoDoMeczuPoNazwach
     @nazwisko_sedziego = 'Prykhodzka',
     @data_ur_sedziego = '2004-09-07',
     @rola = 'glowny';
+
+exec PokazSzczegolyMeczuRozproszone
+	@nazwa_gospodarza = 'Real Madrid',
+    @nazwa_goscia = 'Barcelona',
+    @data_meczu = '2025-08-20';

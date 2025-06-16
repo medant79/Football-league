@@ -220,6 +220,27 @@ BEGIN
     VALUES (@id_meczu, @minuta, @typ_wydarzenia, @id_zawodnika, @dodatkowe_info);
 END
 
+ CREATE PROCEDURE PobierzZawodnikaZeStatystykami
+    @imie NVARCHAR(100),
+    @nazwisko NVARCHAR(100),
+    @data_urodzenia DATE
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+    DECLARE @data_urodzenia_str NVARCHAR(20)
+
+    SET @data_urodzenia_str = CONVERT(NVARCHAR(10), @data_urodzenia, 120)
+
+    SET @sql = '
+    SELECT * FROM OPENQUERY(ORACLE_LINK, 
+        ''SELECT * FROM SYSTEM.vw_zawodnik_statystyki
+          WHERE imie = ''''' + @imie + ''''' 
+          AND nazwisko = ''''' + @nazwisko + '''''
+          AND data_urodzenia = TO_DATE(''''' + @data_urodzenia_str + ''''', ''''YYYY-MM-DD'''')'')'
+
+    EXEC sp_executesql @sql
+END
+
 go
 
 CREATE FUNCTION LiczbaMeczyNaStadionie(@id_stadionu INT)

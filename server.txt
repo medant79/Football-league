@@ -1,29 +1,3 @@
-CREATE TABLE Mecze (
-    id_meczu INT IDENTITY(1,1) PRIMARY KEY,
-    data_meczu DATE NOT NULL,
-    godzina TIME NOT NULL,
-    id_gospodarza INT NOT NULL,  -- odwołanie do KLUB z Oracla (brak FK)
-    id_goscia INT NOT NULL,      -- odwołanie do KLUB z Oracla
-    id_stadionu INT NULL,        -- odwołanie do stadionu z Excela
-    wynik NVARCHAR(20) NULL
-);
-
--- Tabela WYDARZENIA MECZOWE
-CREATE TABLE WydarzeniaMeczowe (
-    id_wydarzenia INT IDENTITY(1,1) PRIMARY KEY,
-    id_meczu INT NOT NULL,
-    minuta INT NOT NULL,
-    typ_wydarzenia NVARCHAR(50) NOT NULL,  -- np. gol, faul, kartka
-    id_zawodnika INT NULL,                 -- odwołanie do Oracla (ZAWODNIK)
-    dodatkowe_info NVARCHAR(255) NULL,
-
-    FOREIGN KEY (id_meczu) REFERENCES Mecze(id_meczu)
-);
-
-CREATE UNIQUE INDEX UX_WydarzeniaMeczowe_Koniec
-ON WydarzeniaMeczowe(id_meczu)
-WHERE typ_wydarzenia = 'koniec';
-
 CREATE TABLE Stadiony (
     id_stadionu INT IDENTITY(1,1) PRIMARY KEY,
     nazwa NVARCHAR(100) NOT NULL,
@@ -32,8 +6,30 @@ CREATE TABLE Stadiony (
     status BIT NOT NULL DEFAULT 1
 );
 
-ALTER TABLE Mecze
-ADD CONSTRAINT fk_mecze_stadiony FOREIGN KEY (id_stadionu) REFERENCES Stadiony(id_stadionu);
+CREATE TABLE Mecze (
+    id_meczu INT IDENTITY(1,1) PRIMARY KEY,
+    data_meczu DATE NOT NULL,
+    godzina TIME NOT NULL,
+    id_gospodarza INT NOT NULL,
+    id_goscia INT NOT NULL,
+    id_stadionu INT NULL,
+    wynik NVARCHAR(20) NULL,
+    CONSTRAINT fk_mecze_stadiony FOREIGN KEY (id_stadionu) REFERENCES Stadiony(id_stadionu)
+);
+
+CREATE TABLE WydarzeniaMeczowe (
+    id_wydarzenia INT IDENTITY(1,1) PRIMARY KEY,
+    id_meczu INT NOT NULL,
+    minuta INT NOT NULL,
+    typ_wydarzenia NVARCHAR(50) NOT NULL,
+    id_zawodnika INT NULL,
+    dodatkowe_info NVARCHAR(255) NULL,
+    FOREIGN KEY (id_meczu) REFERENCES Mecze(id_meczu)
+);
+
+CREATE UNIQUE INDEX UX_WydarzeniaMeczowe_Koniec
+ON WydarzeniaMeczowe(id_meczu)
+WHERE typ_wydarzenia = 'koniec';
 
 EXEC sp_addlinkedserver 
     @server = 'ORACLE_LINK',

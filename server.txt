@@ -562,6 +562,22 @@ BEGIN
         END CATCH
     END
 
+    IF EXISTS (
+    SELECT 1
+    FROM Mecze
+    WHERE data_meczu = @data
+      AND (
+          id_gospodarza = @id_gospodarza OR
+          id_goscia = @id_gospodarza OR
+          id_gospodarza = @id_goscia OR
+          id_goscia = @id_goscia
+      )
+    )
+    BEGIN
+        RAISERROR('Jedna z drużyn ma już zaplanowany mecz tego dnia.', 16, 1);
+        RETURN;
+    END
+
     INSERT INTO Mecze (data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik)
     SELECT data_meczu, godzina, id_gospodarza, id_goscia, id_stadionu, wynik
     FROM inserted;

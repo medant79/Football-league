@@ -475,6 +475,7 @@ EXEC DodajWydarzenieMeczowe 2, 38, 'zolta kartka', 'Dayot', 'Upamecano', '1998-1
 EXEC DodajWydarzenieMeczowe 2, 55, 'czerwona kartka', 'William', 'Saliba', '2001-03-24', 'Faul jako ostatni obrońca';
 EXEC DodajWydarzenieMeczowe 1, 90, 'koniec', NULL, NULL, NULL, 'Sędzia zakończył mecz';
 
+select * from WydarzeniaMeczowe
 
  CREATE PROCEDURE PobierzZawodnikaZeStatystykami
     @imie NVARCHAR(100),
@@ -725,42 +726,3 @@ BEGIN
     INSERT INTO Stadiony (nazwa, miasto, pojemnosc, status)
     SELECT nazwa, miasto, pojemnosc, status FROM inserted;
 END;
-
---testy
-EXEC DodajStadion @nazwa = 'Narodowy', @miasto = 'Warszawa', @pojemnosc = 58000;
-
-EXEC DodajMeczPoNazwach 
-    @data_meczu = '2025-06-20',
-    @godzina = '18:00',
-    @nazwa_gospodarza = 'Barcelona',
-    @nazwa_goscia = 'Real Madrid',
-    @id_stadionu = 1,
-    @wynik = '2:1';
-
-select * from mecze
-
-EXEC DodajWydarzenieMeczowe
-    @id_meczu = 8,
-    @minuta = 46,
-    @typ_wydarzenia = 'gol',
-    @imie = 'Szymon',
-    @nazwisko = 'Muszynski',
-    @data_urodzenia = '2003-09-09',
-    @dodatkowe_info = 'gol lewa noge';
-
-select * from WydarzeniaMeczowe
-
-
-exec DodajSedziegoDoMeczuPoNazwach
-	@nazwa_gospodarza = 'Real Madrid',
-    @nazwa_goscia = 'Barcelona',
-    @data_meczu = '2025-08-20',
-    @imie_sedziego = 'Anton',
-    @nazwisko_sedziego = 'Prykhodzka',
-    @data_ur_sedziego = '2004-09-07',
-    @rola = 'glowny';
-
-exec PokazSzczegolyMeczuRozproszone
-	@nazwa_gospodarza = 'Real Madrid',
-    @nazwa_goscia = 'Barcelona',
-    @data_meczu = '2025-08-20';

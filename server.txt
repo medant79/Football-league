@@ -359,6 +359,22 @@ BEGIN
     PRINT 'Sędzia został przypisany do meczu.';
 END;
 
+CREATE OR ALTER PROCEDURE dbo.PokazWszystkichSedziow
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    EXEC('
+        SELECT id_sedziego,
+               imie,
+               nazwisko,
+               CONVERT(VARCHAR(10), data_urodzenia, 120) AS data_urodzenia
+        FROM master.dbo.Sedziowie
+        ORDER BY nazwisko, imie;
+    ') AT DOCKER_SQL;
+END;
+GO
+
 go
 
 CREATE FUNCTION LiczbaMeczyNaStadionie(@id_stadionu INT)

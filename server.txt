@@ -279,6 +279,86 @@ BEGIN
     EXEC sp_executesql @sql
 END
 
+CREATE OR ALTER PROCEDURE dbo.DodajSedziegoDoMeczuPoNazwach
+    @nazwa_gospodarza    NVARCHAR(100),
+    @nazwa_goscia        NVARCHAR(100),
+    @data_meczu          DATE,
+    @imie_sedziego       NVARCHAR(50),
+    @nazwisko_sedziego   NVARCHAR(50),
+    @data_ur_sedziego    DATE,
+    @rola                NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_gosp INT, @id_gosc INT, @id_meczu INT, @id_sedziego INT;
+    DECLARE @data_ur_sedziego_str CHAR(10) = CONVERT(CHAR(10), @data_ur_sedziego, 120);
+    DECLARE @data_meczu_str CHAR(10) = CONVERT(CHAR(10), @data_meczu, 120);
+
+    SELECT @id_gosp = id_klubu
+    FROM OPENQUERY(ORACLE_LINK,
+        'SELECT id_klubu, nazwa FROM SYSTEM.KLUB')
+    WHERE nazwa = @nazwa_gospodarza;
+
+    SELECT @id_gosc = id_klubu
+    FROM OPENQUERY(ORACLE_LINK,
+        'SELECT id_klubu, nazwa FROM SYSTEM.KLUB')
+    WHERE nazwa = @nazwa_goscia;
+
+    IF @id_gosp IS NULL OR @id_gosc IS NULL
+    BEGIN
+        RAISERROR('Nie znaleziono jednej z drużyn w Oracle.', 16, 1);
+        RETURN;
+    END
+
+    SELECT TOP 1 @id_meczu = id_meczu
+    FROM dbo.Mecze
+    WHERE id_gospodarza = @id_gosp
+      AND id_goscia = @id_gosc
+      AND data_meczu = @data_meczu;
+
+    IF @id_meczu IS NULL
+    BEGIN
+        RAISERROR('Nie znaleziono meczu o podanych parametrach.', 16, 1);
+        RETURN;
+    END
+
+    SELECT @id_sedziego = id_sedziego
+    FROM OPENQUERY(DOCKER_SQL,
+        'SELECT id_sedziego, imie, nazwisko, CONVERT(VARCHAR(10), data_urodzenia, 120) AS data_urodzenia_str FROM master.dbo.Sedziowie') AS remoteSedziowie
+    WHERE imie = @imie_sedziego
+      AND nazwisko = @nazwisko_sedziego
+      AND data_urodzenia_str = @data_ur_sedziego_str;
+
+    IF @id_sedziego IS NULL
+    BEGIN
+        DECLARE @sql_insert NVARCHAR(MAX) = 
+            'INSERT INTO master.dbo.Sedziowie (imie, nazwisko, data_urodzenia) VALUES (''' 
+            + REPLACE(@imie_sedziego,'''','''''') + ''',''' 
+            + REPLACE(@nazwisko_sedziego,'''','''''') + ''',''' 
+            + @data_ur_sedziego_str + ''')';
+
+        EXEC (@sql_insert) AT DOCKER_SQL;
+
+        SELECT @id_sedziego = id_sedziego
+        FROM OPENQUERY(DOCKER_SQL,
+            'SELECT id_sedziego, imie, nazwisko, CONVERT(VARCHAR(10), data_urodzenia, 120) AS data_urodzenia_str FROM master.dbo.Sedziowie') AS remoteSedziowie
+        WHERE imie = @imie_sedziego
+          AND nazwisko = @nazwisko_sedziego
+          AND data_urodzenia_str = @data_ur_sedziego_str;
+    END
+
+    DECLARE @sql_meczsedziowie NVARCHAR(MAX) = 
+        'INSERT INTO master.dbo.MeczeSedziowie (id_meczu, id_sedziego, rola) VALUES (' 
+        + CAST(@id_meczu AS NVARCHAR(10)) + ', ' 
+        + CAST(@id_sedziego AS NVARCHAR(10)) + ', ''' 
+        + REPLACE(@rola,'''','''''') + ''')';
+
+    EXEC (@sql_meczsedziowie) AT DOCKER_SQL;
+
+    PRINT 'Sędzia został przypisany do meczu.';
+END;
+
 go
 
 CREATE FUNCTION LiczbaMeczyNaStadionie(@id_stadionu INT)
@@ -489,3 +569,13 @@ EXEC DodajWydarzenieMeczowe
     @dodatkowe_info = 'gol lewa noge';
 
 select * from WydarzeniaMeczowe
+
+
+exec DodajSedziegoDoMeczuPoNazwach
+	@nazwa_gospodarza = 'Real Madrid',
+    @nazwa_goscia = 'Barcelona',
+    @data_meczu = '2025-08-20',
+    @imie_sedziego = 'Anton',
+    @nazwisko_sedziego = 'Prykhodzka',
+    @data_ur_sedziego = '2004-09-07',
+    @rola = 'glowny';

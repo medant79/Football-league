@@ -130,6 +130,27 @@ BEGIN
     END IF;
 END;
 
+--widok
+
+CREATE OR REPLACE VIEW vw_zawodnik_statystyki AS
+SELECT 
+    z.id_zawodnika,
+    z.imie,
+    z.nazwisko,
+    z.data_urodzenia,
+    s.ilosc_goli,
+    s.ilosc_asyst,
+    s.ilosc_zoltych_kartek,
+    s.ilosc_czerwonych_kartek,
+    s.ilosc_meczy,
+    srednia_goli_na_mecz(z.id_zawodnika) AS srednia_goli_na_mecz,
+    srednia_asyst_na_mecz(z.id_zawodnika) AS srednia_asyst_na_mecz,
+    srednia_zoltych_kartek_na_mecz(z.id_zawodnika) AS srednia_zoltych_kartek_na_mecz,
+    srednia_czerwonych_kartek_na_mecz(z.id_zawodnika) AS srednia_czerwonych_kartek_na_mecz
+FROM 
+    ZAWODNICY z
+    JOIN STATYSTYKI_ZAWODNIKA s ON z.id_zawodnika = s.id_zawodnika;
+
 --procedury
 
 CREATE OR REPLACE PROCEDURE dodaj_klub (
@@ -234,14 +255,8 @@ CREATE OR REPLACE PROCEDURE pokaz_zawodnika_i_statystyki (
 ) AS
 BEGIN
     FOR rec IN (
-        SELECT z.id_zawodnika, z.imie, z.nazwisko, z.data_urodzenia,
-               s.ilosc_goli, s.ilosc_asyst, s.ilosc_zoltych_kartek, 
-               s.ilosc_czerwonych_kartek, s.ilosc_meczy
-        FROM ZAWODNICY z
-        JOIN STATYSTYKI_ZAWODNIKA s ON z.id_zawodnika = s.id_zawodnika
-        WHERE z.imie = p_imie
-          AND z.nazwisko = p_nazwisko
-          AND z.data_urodzenia = p_data_urodzenia
+        SELECT * FROM vw_zawodnik_statystyki
+        WHERE imie = p_imie AND nazwisko = p_nazwisko AND data_urodzenia = p_data_urodzenia
     ) LOOP
         DBMS_OUTPUT.PUT_LINE('Zawodnik: ' || rec.imie || ' ' || rec.nazwisko);
         DBMS_OUTPUT.PUT_LINE('Data urodzenia: ' || TO_CHAR(rec.data_urodzenia, 'YYYY-MM-DD'));
@@ -250,11 +265,10 @@ BEGIN
                              ', Asysty: ' || rec.ilosc_asyst);
         DBMS_OUTPUT.PUT_LINE('Żółte kartki: ' || rec.ilosc_zoltych_kartek || 
                              ', Czerwone kartki: ' || rec.ilosc_czerwonych_kartek);
-
-        DBMS_OUTPUT.PUT_LINE('Średnia goli na mecz: ' || TO_CHAR(srednia_goli_na_mecz(rec.id_zawodnika), 'FM9990.00'));
-        DBMS_OUTPUT.PUT_LINE('Średnia asyst na mecz: ' || TO_CHAR(srednia_asyst_na_mecz(rec.id_zawodnika), 'FM9990.00'));
-        DBMS_OUTPUT.PUT_LINE('Średnia żółtych kartek na mecz: ' || TO_CHAR(srednia_zoltych_kartek_na_mecz(rec.id_zawodnika), 'FM9990.00'));
-        DBMS_OUTPUT.PUT_LINE('Średnia czerwonych kartek na mecz: ' || TO_CHAR(srednia_czerwonych_kartek_na_mecz(rec.id_zawodnika), 'FM9990.00'));
+        DBMS_OUTPUT.PUT_LINE('Średnia goli na mecz: ' || rec.srednia_goli_na_mecz);
+        DBMS_OUTPUT.PUT_LINE('Średnia asyst na mecz: ' || rec.srednia_asyst_na_mecz);
+        DBMS_OUTPUT.PUT_LINE('Średnia żółtych kartek na mecz: ' || rec.srednia_zoltych_kartek_na_mecz);
+        DBMS_OUTPUT.PUT_LINE('Średnia czerwonych kartek na mecz: ' || rec.srednia_czerwonych_kartek_na_mecz);
     END LOOP;
 END;
 

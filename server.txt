@@ -305,6 +305,63 @@ BEGIN
     EXEC (@sql) AT ORACLE_LINK;
 END;
 
+CREATE OR ALTER TRIGGER trg_AktualizujMeczePoDodaniu
+ON Mecze
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_gospodarza INT, @id_goscia INT;
+
+    SELECT TOP 1
+        @id_gospodarza = id_gospodarza,
+        @id_goscia = id_goscia
+    FROM inserted;
+
+    DECLARE @Zawodnicy TABLE (id_zawodnika INT);
+
+    DECLARE @sql NVARCHAR(MAX);
+
+    SET @sql = '
+        SELECT id_zawodnika 
+        FROM OPENQUERY(ORACLE_LINK, 
+            ''SELECT id_zawodnika FROM SYSTEM.Zawodnicy WHERE id_klubu = ' + CAST(@id_gospodarza AS NVARCHAR) + ''')';
+
+    INSERT INTO @Zawodnicy (id_zawodnika)
+    EXEC(@sql);
+
+    SET @sql = '
+        SELECT id_zawodnika 
+        FROM OPENQUERY(ORACLE_LINK, 
+            ''SELECT id_zawodnika FROM SYSTEM.Zawodnicy WHERE id_klubu = ' + CAST(@id_goscia AS NVARCHAR) + ''')';
+
+    INSERT INTO @Zawodnicy (id_zawodnika)
+    EXEC(@sql);
+
+    DECLARE @id INT;
+    DECLARE @sql_call NVARCHAR(MAX);
+
+    DECLARE zawodnicy_cursor CURSOR FOR
+        SELECT id_zawodnika FROM @Zawodnicy;
+
+    OPEN zawodnicy_cursor;
+    FETCH NEXT FROM zawodnicy_cursor INTO @id;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @sql_call = '
+        BEGIN
+            SYSTEM.aktualizuj_statystyki(' + CAST(@id AS NVARCHAR) + ', 0, 0, 0, 0, 1);
+        END;';
+        EXEC (@sql_call) AT ORACLE_LINK;
+
+        FETCH NEXT FROM zawodnicy_cursor INTO @id;
+    END
+
+    CLOSE zawodnicy_cursor;
+    DEALLOCATE zawodnicy_cursor;
+END;
 
 --testy
 EXEC DodajStadion @nazwa = 'Narodowy', @miasto = 'Warszawa', @pojemnosc = 58000;

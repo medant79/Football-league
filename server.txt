@@ -498,6 +498,11 @@ BEGIN
     EXEC sp_executesql @sql
 END
 
+EXEC PobierzZawodnikaZeStatystykami 'Dayot', 'Upamecano', '1998-10-27';
+EXEC PobierzZawodnikaZeStatystykami 'Robert', 'Lewandowski', '1988-08-21';
+EXEC PobierzZawodnikaZeStatystykami 'Pedri', 'Gonzalez', '2002-11-25';
+EXEC PobierzZawodnikaZeStatystykami 'William', 'Saliba', '2001-03-24';
+
 CREATE OR ALTER PROCEDURE dbo.DodajSedziegoDoMeczuPoNazwach
     @nazwa_gospodarza    NVARCHAR(100),
     @nazwa_goscia        NVARCHAR(100),

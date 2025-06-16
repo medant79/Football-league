@@ -583,6 +583,37 @@ BEGIN
     PRINT 'Sędzia został przypisany do meczu.';
 END;
 
+EXEC DodajSedziegoDoMeczuPoNazwach 
+    'Real Madrid', 'Barcelona', '2025-08-01',
+    'Piotr', 'Nowak', '1980-05-14',
+    'sędzia główny';
+
+EXEC DodajSedziegoDoMeczuPoNazwach 
+    'Bayern', 'Arsenal', '2025-08-02',
+    'Marek', 'Kowalski', '1975-11-22',
+    'VAR';
+
+EXEC DodajSedziegoDoMeczuPoNazwach 
+    'Manchester City', 'Inter Milan', '2025-08-03',
+    'Tomasz', 'Wiśniewski', '1988-03-30',
+    'sędzia techniczny';
+
+EXEC DodajSedziegoDoMeczuPoNazwach 
+    'Arsenal', 'Real Madrid', '2025-08-04',
+    'Andrzej', 'Lewandowski', '1982-07-08',
+    'sędzia liniowy';
+
+EXEC DodajSedziegoDoMeczuPoNazwach 
+    'Barcelona', 'Manchester City', '2025-08-05',
+    'Krzysztof', 'Zieliński', '1979-01-19',
+    'asystent VAR';
+
+--nowy sedzia
+EXEC DodajSedziegoDoMeczuPoNazwach 
+    'Inter Milan', 'Bayern', '2025-08-06',
+    'Adam', 'Nowicki', '1983-04-25',
+    'sędzia główny';
+
 CREATE OR ALTER PROCEDURE dbo.PokazWszystkichSedziow
 AS
 BEGIN
@@ -600,6 +631,7 @@ END;
 GO
 
 exec PokazWszystkichSedziow
+
 go
 CREATE OR ALTER PROCEDURE dbo.PokazSzczegolyMeczuRozproszone
     @nazwa_gospodarza  NVARCHAR(100),
@@ -703,6 +735,8 @@ BEGIN
 	PRINT '=======================';
 END;
 
+EXEC PokazSzczegolyMeczuRozproszone 'Real Madrid', 'Barcelona', '2025-08-01';
+
 go
 
 CREATE FUNCTION LiczbaMeczyNaStadionie(@id_stadionu INT)
@@ -731,3 +765,5 @@ BEGIN
     INSERT INTO Stadiony (nazwa, miasto, pojemnosc, status)
     SELECT nazwa, miasto, pojemnosc, status FROM inserted;
 END;
+
+SELECT dbo.LiczbaMeczyNaStadionie(1) AS LiczbaMeczy;

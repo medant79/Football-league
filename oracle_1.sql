@@ -250,6 +250,11 @@ BEGIN
                              ', Asysty: ' || rec.ilosc_asyst);
         DBMS_OUTPUT.PUT_LINE('Żółte kartki: ' || rec.ilosc_zoltych_kartek || 
                              ', Czerwone kartki: ' || rec.ilosc_czerwonych_kartek);
+
+        DBMS_OUTPUT.PUT_LINE('Średnia goli na mecz: ' || TO_CHAR(srednia_goli_na_mecz(rec.id_zawodnika), 'FM9990.00'));
+        DBMS_OUTPUT.PUT_LINE('Średnia asyst na mecz: ' || TO_CHAR(srednia_asyst_na_mecz(rec.id_zawodnika), 'FM9990.00'));
+        DBMS_OUTPUT.PUT_LINE('Średnia żółtych kartek na mecz: ' || TO_CHAR(srednia_zoltych_kartek_na_mecz(rec.id_zawodnika), 'FM9990.00'));
+        DBMS_OUTPUT.PUT_LINE('Średnia czerwonych kartek na mecz: ' || TO_CHAR(srednia_czerwonych_kartek_na_mecz(rec.id_zawodnika), 'FM9990.00'));
     END LOOP;
 END;
 

@@ -102,6 +102,44 @@ BEGIN
     EXEC (@sql_zawodnicy);
 END;
 
+CREATE PROCEDURE wywolaj_przeniesienie_zawodnika
+    @imie NVARCHAR(100),
+    @nazwisko NVARCHAR(100),
+    @data_urodzenia DATE,
+    @nazwa_klubu NVARCHAR(100)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+
+    SET @sql = '
+    BEGIN
+        SYSTEM.przenies_zawodnika(''' + @imie + ''', ''' + @nazwisko + ''', TO_DATE(''' + 
+        CONVERT(VARCHAR(10), @data_urodzenia, 120) + ''', ''YYYY-MM-DD''), ''' + 
+        @nazwa_klubu + ''');
+    END;'
+
+    EXECUTE (@sql) AT ORACLE_LINK
+END
+
+CREATE PROCEDURE wywolaj_zmiane_klubu_menadzera
+    @imie NVARCHAR(100),
+    @nazwisko NVARCHAR(100),
+    @data_urodzenia DATE,
+    @nazwa_klubu NVARCHAR(100)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+
+    SET @sql = '
+    BEGIN
+        SYSTEM.zmien_klub_menadzera(''' + @imie + ''', ''' + @nazwisko + ''', TO_DATE(''' + 
+        CONVERT(VARCHAR(10), @data_urodzenia, 120) + ''', ''YYYY-MM-DD''), ''' + 
+        @nazwa_klubu + ''');
+    END;'
+
+    EXECUTE (@sql) AT ORACLE_LINK
+END
+
 CREATE PROCEDURE ZmienStatusStadionu
     @nazwa NVARCHAR(100),
     @nowy_status BIT

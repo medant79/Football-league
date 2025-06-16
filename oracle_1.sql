@@ -130,227 +130,8 @@ BEGIN
     END IF;
 END;
 
---widok
-
-CREATE OR REPLACE VIEW vw_zawodnik_statystyki AS
-SELECT 
-    z.id_zawodnika,
-    z.imie,
-    z.nazwisko,
-    z.data_urodzenia,
-    s.ilosc_goli,
-    s.ilosc_asyst,
-    s.ilosc_zoltych_kartek,
-    s.ilosc_czerwonych_kartek,
-    s.ilosc_meczy,
-    srednia_goli_na_mecz(z.id_zawodnika) AS srednia_goli_na_mecz,
-    srednia_asyst_na_mecz(z.id_zawodnika) AS srednia_asyst_na_mecz,
-    srednia_zoltych_kartek_na_mecz(z.id_zawodnika) AS srednia_zoltych_kartek_na_mecz,
-    srednia_czerwonych_kartek_na_mecz(z.id_zawodnika) AS srednia_czerwonych_kartek_na_mecz
-FROM 
-    ZAWODNICY z
-    JOIN STATYSTYKI_ZAWODNIKA s ON z.id_zawodnika = s.id_zawodnika;
-
---procedury
-
-CREATE OR REPLACE PROCEDURE dodaj_klub (
-    p_nazwa IN VARCHAR2
-) AS
-BEGIN
-    INSERT INTO Klub (id_klubu, nazwa)
-    VALUES (seq_klub.NEXTVAL, p_nazwa);
-END;
-
-CREATE OR REPLACE PROCEDURE dodaj_menadzera(
-    p_imie IN VARCHAR2,
-    p_nazwisko IN VARCHAR2,
-    p_data_urodzenia IN DATE,
-    p_nazwa_klubu IN VARCHAR2
-) AS
-    v_id_klubu NUMBER;
-BEGIN
-    SELECT id_klubu INTO v_id_klubu
-    FROM Klub
-    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
-
-    INSERT INTO Menadzer(id_menadzera, imie, nazwisko, data_urodzenia, id_klubu)
-    VALUES (seq_menadzer.NEXTVAL, p_imie, p_nazwisko, p_data_urodzenia, v_id_klubu);
-END;
-
-CREATE OR REPLACE PROCEDURE zmien_klub_menadzera(
-    p_imie IN VARCHAR2,
-    p_nazwisko IN VARCHAR2,
-    p_data_urodzenia IN DATE,
-    p_nowa_nazwa_klubu IN VARCHAR2
-) AS
-    v_id_klubu NUMBER;
-BEGIN
-    SELECT id_klubu INTO v_id_klubu
-    FROM Klub
-    WHERE LOWER(nazwa) = LOWER(p_nowa_nazwa_klubu);
-
-    UPDATE Menadzer
-    SET id_klubu = v_id_klubu
-    WHERE LOWER(imie) = LOWER(p_imie)
-      AND LOWER(nazwisko) = LOWER(p_nazwisko)
-      AND data_urodzenia = p_data_urodzenia;
-END;
-
-CREATE OR REPLACE PROCEDURE dodaj_zawodnika (
-    p_imie IN VARCHAR2,
-    p_nazwisko IN VARCHAR2,
-    p_data_ur DATE,
-    p_nazwa_klubu IN VARCHAR2
-) AS
-    v_id_klubu NUMBER;
-BEGIN
-    SELECT id_klubu INTO v_id_klubu
-    FROM Klub
-    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
-
-    INSERT INTO Zawodnicy (id_zawodnika, imie, nazwisko, data_urodzenia, id_klubu)
-    VALUES (seq_zawodnik.NEXTVAL, p_imie, p_nazwisko, p_data_ur, v_id_klubu);
-END;
-
-CREATE OR REPLACE PROCEDURE przenies_zawodnika(
-    p_imie VARCHAR2,
-    p_nazwisko VARCHAR2,
-    p_data_ur DATE,
-    p_nazwa_klubu VARCHAR2
-) IS
-    v_id_klubu NUMBER;
-BEGIN
-    SELECT id_klubu INTO v_id_klubu
-    FROM Klub
-    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
-
-    UPDATE Zawodnicy
-    SET id_klubu = v_id_klubu
-    WHERE imie = p_imie AND nazwisko = p_nazwisko AND data_urodzenia = p_data_ur;
-END;
-
-CREATE OR REPLACE PROCEDURE aktualizuj_statystyki (
-    p_id_zawodnika NUMBER,
-    p_gole NUMBER,
-    p_asysty NUMBER,
-    p_zolte NUMBER,
-    p_czerwone NUMBER,
-    p_mecze NUMBER
-) IS
-BEGIN
-    UPDATE Statystyki_zawodnika
-    SET 
-        ilosc_goli = ilosc_goli + p_gole,
-        ilosc_asyst = ilosc_asyst + p_asysty,
-        ilosc_zoltych_kartek = ilosc_zoltych_kartek + p_zolte,
-        ilosc_czerwonych_kartek = ilosc_czerwonych_kartek + p_czerwone,
-        ilosc_meczy = ilosc_meczy + p_mecze
-    WHERE id_zawodnika = p_id_zawodnika;
-END;
-
-CREATE OR REPLACE PROCEDURE pokaz_zawodnika_i_statystyki (
-    p_imie           IN ZAWODNICY.imie%TYPE,
-    p_nazwisko       IN ZAWODNICY.nazwisko%TYPE,
-    p_data_urodzenia IN ZAWODNICY.data_urodzenia%TYPE
-) AS
-BEGIN
-    FOR rec IN (
-        SELECT * FROM vw_zawodnik_statystyki
-        WHERE imie = p_imie AND nazwisko = p_nazwisko AND data_urodzenia = p_data_urodzenia
-    ) LOOP
-        DBMS_OUTPUT.PUT_LINE('Zawodnik: ' || rec.imie || ' ' || rec.nazwisko);
-        DBMS_OUTPUT.PUT_LINE('Data urodzenia: ' || TO_CHAR(rec.data_urodzenia, 'YYYY-MM-DD'));
-        DBMS_OUTPUT.PUT_LINE('Mecze: ' || rec.ilosc_meczy || 
-                             ', Gole: ' || rec.ilosc_goli || 
-                             ', Asysty: ' || rec.ilosc_asyst);
-        DBMS_OUTPUT.PUT_LINE('Żółte kartki: ' || rec.ilosc_zoltych_kartek || 
-                             ', Czerwone kartki: ' || rec.ilosc_czerwonych_kartek);
-        DBMS_OUTPUT.PUT_LINE('Średnia goli na mecz: ' || rec.srednia_goli_na_mecz);
-        DBMS_OUTPUT.PUT_LINE('Średnia asyst na mecz: ' || rec.srednia_asyst_na_mecz);
-        DBMS_OUTPUT.PUT_LINE('Średnia żółtych kartek na mecz: ' || rec.srednia_zoltych_kartek_na_mecz);
-        DBMS_OUTPUT.PUT_LINE('Średnia czerwonych kartek na mecz: ' || rec.srednia_czerwonych_kartek_na_mecz);
-    END LOOP;
-END;
-
-CREATE OR REPLACE PROCEDURE pokaz_zawodnikow_klubu (
-    p_nazwa_klubu IN KLUB.nazwa%TYPE
-) AS
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('Klub: ' || p_nazwa_klubu);
-    FOR rec IN (
-        SELECT z.imie, z.nazwisko, z.data_urodzenia
-        FROM ZAWODNICY z
-        JOIN KLUB k ON z.id_klubu = k.id_klubu
-        WHERE k.nazwa = p_nazwa_klubu
-    ) LOOP
-        DBMS_OUTPUT.PUT_LINE('Zawodnik: ' || rec.imie || ' ' || rec.nazwisko ||
-                             ', Data urodzenia: ' || TO_CHAR(rec.data_urodzenia));
-    END LOOP;
-END;
-
-CREATE OR REPLACE PROCEDURE pokaz_menadzera_klubu (
-    p_nazwa_klubu IN KLUB.nazwa%TYPE
-) AS
-BEGIN
-    FOR rec IN (
-        SELECT m.imie, m.nazwisko, m.data_urodzenia, k.nazwa as nazwa_klubu
-        FROM MENADZER m
-        JOIN KLUB k ON m.id_klubu = k.id_klubu
-        WHERE k.nazwa = p_nazwa_klubu
-    ) LOOP
-        DBMS_OUTPUT.PUT_LINE('Klub: ' || rec.nazwa_klubu || ', Menadżer: ' || rec.imie || ' ' || rec.nazwisko ||
-                             ', Data urodzenia: ' || TO_CHAR(rec.data_urodzenia));
-    END LOOP;
-END;
-
-BEGIN
-    pokaz_zawodnika_i_statystyki('Luka', 'Modric', TO_DATE('1985-09-09', 'YYYY-MM-DD'));
-END;
-
-BEGIN
-    pokaz_zawodnikow_klubu('Barcelona');
-END;
-
-BEGIN
-    pokaz_menadzera_klubu('Barcelona');
-END;
-
---testy
-BEGIN
-    dodaj_klub('Real Madrid');
-    dodaj_klub('Barcelona');
-END;
-SELECT * FROM Klub;
-
-BEGIN
-    dodaj_menadzera('Carlo', 'Ancelotti', TO_DATE('1959-06-10','YYYY-MM-DD'), 'Real Madrid');
-END;
-
-BEGIN
-    zmien_klub_menadzera('Carlo', 'Ancelotti', TO_DATE('1959-06-10','YYYY-MM-DD'), 'Barcelona');
-END;
-
-SELECT * FROM Menadzer;
-
-BEGIN
-    dodaj_zawodnika('Luka', 'Modric', TO_DATE('1985-09-09','YYYY-MM-DD'), 'Real Madrid');
-END;
-SELECT * FROM Zawodnicy;
-SELECT * FROM Statystyki_zawodnika;
-
-BEGIN
-    przenies_zawodnika('Luka', 'Modric', TO_DATE('1985-09-09','YYYY-MM-DD'), 'Barcelona');
-END;
-
-SELECT * FROM Zawodnicy;
-
-BEGIN
-    aktualizuj_statystyki(1, 2, 1, 1, 0, 1); -- 2 gole, 1 asysta, 1 żółta kartka, 0 czerwonych, 1 mecz
-END;
-
-SELECT * FROM Statystyki_zawodnika;
-
 --funkcje
+
 CREATE OR REPLACE FUNCTION detect_id (
     p_imie IN VARCHAR2,
     p_nazwisko IN VARCHAR2,
@@ -438,4 +219,265 @@ BEGIN
     END IF;
 END;
 
-SELECT srednia_goli_na_mecz(1) AS srednia FROM dual;
+--widok
+
+CREATE OR REPLACE VIEW vw_zawodnik_statystyki AS
+SELECT 
+    z.id_zawodnika,
+    z.imie,
+    z.nazwisko,
+    z.data_urodzenia,
+    s.ilosc_goli,
+    s.ilosc_asyst,
+    s.ilosc_zoltych_kartek,
+    s.ilosc_czerwonych_kartek,
+    s.ilosc_meczy,
+    srednia_goli_na_mecz(z.id_zawodnika) AS srednia_goli_na_mecz,
+    srednia_asyst_na_mecz(z.id_zawodnika) AS srednia_asyst_na_mecz,
+    srednia_zoltych_kartek_na_mecz(z.id_zawodnika) AS srednia_zoltych_kartek_na_mecz,
+    srednia_czerwonych_kartek_na_mecz(z.id_zawodnika) AS srednia_czerwonych_kartek_na_mecz
+FROM 
+    ZAWODNICY z
+    JOIN STATYSTYKI_ZAWODNIKA s ON z.id_zawodnika = s.id_zawodnika;
+
+--procedury
+
+CREATE OR REPLACE PROCEDURE dodaj_klub (
+    p_nazwa IN VARCHAR2
+) AS
+BEGIN
+    INSERT INTO Klub (id_klubu, nazwa)
+    VALUES (seq_klub.NEXTVAL, p_nazwa);
+END;
+
+BEGIN
+    dodaj_klub('Real Madrid');
+    dodaj_klub('Barcelona');
+    dodaj_klub('Bayern');
+    dodaj_klub('Arsenal');
+    dodaj_klub('Manchester City');
+    dodaj_klub('Inter Milan');
+END;
+SELECT * FROM Klub;
+
+CREATE OR REPLACE PROCEDURE dodaj_menadzera(
+    p_imie IN VARCHAR2,
+    p_nazwisko IN VARCHAR2,
+    p_data_urodzenia IN DATE,
+    p_nazwa_klubu IN VARCHAR2
+) AS
+    v_id_klubu NUMBER;
+BEGIN
+    SELECT id_klubu INTO v_id_klubu
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
+
+    INSERT INTO Menadzer(id_menadzera, imie, nazwisko, data_urodzenia, id_klubu)
+    VALUES (seq_menadzer.NEXTVAL, p_imie, p_nazwisko, p_data_urodzenia, v_id_klubu);
+END;
+
+BEGIN
+    dodaj_menadzera('Carlo', 'Ancelotti', TO_DATE('1959-06-10','YYYY-MM-DD'), 'Real Madrid');
+    dodaj_menadzera('Xavi', 'Hernandez', TO_DATE('1980-01-25','YYYY-MM-DD'), 'Barcelona');
+    dodaj_menadzera('Thomas', 'Tuchel', TO_DATE('1973-08-29','YYYY-MM-DD'), 'Bayern');
+    dodaj_menadzera('Mikel', 'Arteta', TO_DATE('1982-03-26','YYYY-MM-DD'), 'Arsenal');
+    dodaj_menadzera('Pep', 'Guardiola', TO_DATE('1971-01-18','YYYY-MM-DD'), 'Manchester City');
+    dodaj_menadzera('Simone', 'Inzaghi', TO_DATE('1976-04-05','YYYY-MM-DD'), 'Inter Milan');
+END;
+SELECT * FROM Menadzer;
+
+CREATE OR REPLACE PROCEDURE zmien_klub_menadzera(
+    p_imie IN VARCHAR2,
+    p_nazwisko IN VARCHAR2,
+    p_data_urodzenia IN DATE,
+    p_nowa_nazwa_klubu IN VARCHAR2
+) AS
+    v_id_klubu NUMBER;
+BEGIN
+    SELECT id_klubu INTO v_id_klubu
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nowa_nazwa_klubu);
+
+    UPDATE Menadzer
+    SET id_klubu = v_id_klubu
+    WHERE LOWER(imie) = LOWER(p_imie)
+      AND LOWER(nazwisko) = LOWER(p_nazwisko)
+      AND data_urodzenia = p_data_urodzenia;
+END;
+
+CREATE OR REPLACE PROCEDURE dodaj_zawodnika (
+    p_imie IN VARCHAR2,
+    p_nazwisko IN VARCHAR2,
+    p_data_ur DATE,
+    p_nazwa_klubu IN VARCHAR2
+) AS
+    v_id_klubu NUMBER;
+BEGIN
+    SELECT id_klubu INTO v_id_klubu
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
+
+    INSERT INTO Zawodnicy (id_zawodnika, imie, nazwisko, data_urodzenia, id_klubu)
+    VALUES (seq_zawodnik.NEXTVAL, p_imie, p_nazwisko, p_data_ur, v_id_klubu);
+END;
+
+BEGIN
+    BEGIN
+    -- Real Madrid
+    dodaj_zawodnika('Luka', 'Modric', TO_DATE('1985-09-09','YYYY-MM-DD'), 'Real Madrid');
+    dodaj_zawodnika('Toni', 'Kroos', TO_DATE('1990-01-04','YYYY-MM-DD'), 'Real Madrid');
+    dodaj_zawodnika('Vinicius', 'Junior', TO_DATE('2000-07-12','YYYY-MM-DD'), 'Real Madrid');
+    dodaj_zawodnika('Jude', 'Bellingham', TO_DATE('2003-06-29','YYYY-MM-DD'), 'Real Madrid');
+    dodaj_zawodnika('Antonio', 'Rudiger', TO_DATE('1993-03-03','YYYY-MM-DD'), 'Real Madrid');
+    dodaj_zawodnika('Thibaut', 'Courtois', TO_DATE('1992-05-11','YYYY-MM-DD'), 'Real Madrid');
+
+    -- Barcelona
+    dodaj_zawodnika('Robert', 'Lewandowski', TO_DATE('1988-08-21','YYYY-MM-DD'), 'Barcelona');
+    dodaj_zawodnika('Pedri', 'Gonzalez', TO_DATE('2002-11-25','YYYY-MM-DD'), 'Barcelona');
+    dodaj_zawodnika('Gavi', '', TO_DATE('2004-08-05','YYYY-MM-DD'), 'Barcelona');
+    dodaj_zawodnika('Marc-André', 'ter Stegen', TO_DATE('1992-04-30','YYYY-MM-DD'), 'Barcelona');
+    dodaj_zawodnika('Frenkie', 'de Jong', TO_DATE('1997-05-12','YYYY-MM-DD'), 'Barcelona');
+    dodaj_zawodnika('Jules', 'Kounde', TO_DATE('1998-11-12','YYYY-MM-DD'), 'Barcelona');
+
+    -- Bayern
+    dodaj_zawodnika('Manuel', 'Neuer', TO_DATE('1986-03-27','YYYY-MM-DD'), 'Bayern');
+    dodaj_zawodnika('Joshua', 'Kimmich', TO_DATE('1995-02-08','YYYY-MM-DD'), 'Bayern');
+    dodaj_zawodnika('Jamal', 'Musiala', TO_DATE('2003-02-26','YYYY-MM-DD'), 'Bayern');
+    dodaj_zawodnika('Leroy', 'Sane', TO_DATE('1996-01-11','YYYY-MM-DD'), 'Bayern');
+    dodaj_zawodnika('Kingsley', 'Coman', TO_DATE('1996-06-13','YYYY-MM-DD'), 'Bayern');
+    dodaj_zawodnika('Dayot', 'Upamecano', TO_DATE('1998-10-27','YYYY-MM-DD'), 'Bayern');
+
+    -- Arsenal
+    dodaj_zawodnika('Bukayo', 'Saka', TO_DATE('2001-09-05','YYYY-MM-DD'), 'Arsenal');
+    dodaj_zawodnika('Martin', 'Odegaard', TO_DATE('1998-12-17','YYYY-MM-DD'), 'Arsenal');
+    dodaj_zawodnika('Aaron', 'Ramsdale', TO_DATE('1998-05-14','YYYY-MM-DD'), 'Arsenal');
+    dodaj_zawodnika('Gabriel', 'Martinelli', TO_DATE('2001-06-18','YYYY-MM-DD'), 'Arsenal');
+    dodaj_zawodnika('Declan', 'Rice', TO_DATE('1999-01-14','YYYY-MM-DD'), 'Arsenal');
+    dodaj_zawodnika('William', 'Saliba', TO_DATE('2001-03-24','YYYY-MM-DD'), 'Arsenal');
+
+    -- Manchester City
+    dodaj_zawodnika('Erling', 'Haaland', TO_DATE('2000-07-21','YYYY-MM-DD'), 'Manchester City');
+    dodaj_zawodnika('Kevin', 'De Bruyne', TO_DATE('1991-06-28','YYYY-MM-DD'), 'Manchester City');
+    dodaj_zawodnika('Phil', 'Foden', TO_DATE('2000-05-28','YYYY-MM-DD'), 'Manchester City');
+    dodaj_zawodnika('Ruben', 'Dias', TO_DATE('1997-05-14','YYYY-MM-DD'), 'Manchester City');
+    dodaj_zawodnika('Ederson', 'Moraes', TO_DATE('1993-08-17','YYYY-MM-DD'), 'Manchester City');
+    dodaj_zawodnika('Bernardo', 'Silva', TO_DATE('1994-08-10','YYYY-MM-DD'), 'Manchester City');
+
+    -- Inter Milan
+    dodaj_zawodnika('Lautaro', 'Martinez', TO_DATE('1997-08-22','YYYY-MM-DD'), 'Inter Milan');
+    dodaj_zawodnika('Nicolo', 'Barella', TO_DATE('1997-02-07','YYYY-MM-DD'), 'Inter Milan');
+    dodaj_zawodnika('Hakan', 'Calhanoglu', TO_DATE('1994-02-08','YYYY-MM-DD'), 'Inter Milan');
+    dodaj_zawodnika('Federico', 'Dimarco', TO_DATE('1997-11-10','YYYY-MM-DD'), 'Inter Milan');
+    dodaj_zawodnika('Marcus', 'Thuram', TO_DATE('1997-08-06','YYYY-MM-DD'), 'Inter Milan');
+    dodaj_zawodnika('Yann', 'Sommer', TO_DATE('1988-12-17','YYYY-MM-DD'), 'Inter Milan');
+END;
+
+SELECT z.imie, z.nazwisko, z.data_urodzenia, k.nazwa AS klub
+FROM Zawodnicy z
+JOIN Klub k ON z.id_klubu = k.id_klubu
+WHERE LOWER(k.nazwa) = 'real madrid';
+
+SELECT * FROM Statystyki_zawodnika;
+
+CREATE OR REPLACE PROCEDURE przenies_zawodnika(
+    p_imie VARCHAR2,
+    p_nazwisko VARCHAR2,
+    p_data_ur DATE,
+    p_nazwa_klubu VARCHAR2
+) IS
+    v_id_klubu NUMBER;
+BEGIN
+    SELECT id_klubu INTO v_id_klubu
+    FROM Klub
+    WHERE LOWER(nazwa) = LOWER(p_nazwa_klubu);
+
+    UPDATE Zawodnicy
+    SET id_klubu = v_id_klubu
+    WHERE imie = p_imie AND nazwisko = p_nazwisko AND data_urodzenia = p_data_ur;
+END;
+
+CREATE OR REPLACE PROCEDURE aktualizuj_statystyki (
+    p_id_zawodnika NUMBER,
+    p_gole NUMBER,
+    p_asysty NUMBER,
+    p_zolte NUMBER,
+    p_czerwone NUMBER,
+    p_mecze NUMBER
+) IS
+BEGIN
+    UPDATE Statystyki_zawodnika
+    SET 
+        ilosc_goli = ilosc_goli + p_gole,
+        ilosc_asyst = ilosc_asyst + p_asysty,
+        ilosc_zoltych_kartek = ilosc_zoltych_kartek + p_zolte,
+        ilosc_czerwonych_kartek = ilosc_czerwonych_kartek + p_czerwone,
+        ilosc_meczy = ilosc_meczy + p_mecze
+    WHERE id_zawodnika = p_id_zawodnika;
+END;
+
+CREATE OR REPLACE PROCEDURE pokaz_zawodnika_i_statystyki (
+    p_imie           IN ZAWODNICY.imie%TYPE,
+    p_nazwisko       IN ZAWODNICY.nazwisko%TYPE,
+    p_data_urodzenia IN ZAWODNICY.data_urodzenia%TYPE
+) AS
+BEGIN
+    FOR rec IN (
+        SELECT * FROM vw_zawodnik_statystyki
+        WHERE imie = p_imie AND nazwisko = p_nazwisko AND data_urodzenia = p_data_urodzenia
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('Zawodnik: ' || rec.imie || ' ' || rec.nazwisko);
+        DBMS_OUTPUT.PUT_LINE('Data urodzenia: ' || TO_CHAR(rec.data_urodzenia, 'YYYY-MM-DD'));
+        DBMS_OUTPUT.PUT_LINE('Mecze: ' || rec.ilosc_meczy || 
+                             ', Gole: ' || rec.ilosc_goli || 
+                             ', Asysty: ' || rec.ilosc_asyst);
+        DBMS_OUTPUT.PUT_LINE('Żółte kartki: ' || rec.ilosc_zoltych_kartek || 
+                             ', Czerwone kartki: ' || rec.ilosc_czerwonych_kartek);
+        DBMS_OUTPUT.PUT_LINE('Średnia goli na mecz: ' || rec.srednia_goli_na_mecz);
+        DBMS_OUTPUT.PUT_LINE('Średnia asyst na mecz: ' || rec.srednia_asyst_na_mecz);
+        DBMS_OUTPUT.PUT_LINE('Średnia żółtych kartek na mecz: ' || rec.srednia_zoltych_kartek_na_mecz);
+        DBMS_OUTPUT.PUT_LINE('Średnia czerwonych kartek na mecz: ' || rec.srednia_czerwonych_kartek_na_mecz);
+    END LOOP;
+END;
+
+BEGIN
+    pokaz_zawodnika_i_statystyki('Luka', 'Modric', TO_DATE('1985-09-09', 'YYYY-MM-DD'));
+END;
+
+CREATE OR REPLACE PROCEDURE pokaz_zawodnikow_klubu (
+    p_nazwa_klubu IN KLUB.nazwa%TYPE
+) AS
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Klub: ' || p_nazwa_klubu);
+    FOR rec IN (
+        SELECT z.imie, z.nazwisko, z.data_urodzenia
+        FROM ZAWODNICY z
+        JOIN KLUB k ON z.id_klubu = k.id_klubu
+        WHERE k.nazwa = p_nazwa_klubu
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('Zawodnik: ' || rec.imie || ' ' || rec.nazwisko ||
+                             ', Data urodzenia: ' || TO_CHAR(rec.data_urodzenia));
+    END LOOP;
+END;
+
+BEGIN
+    pokaz_zawodnikow_klubu('Barcelona');
+END;
+
+CREATE OR REPLACE PROCEDURE pokaz_menadzera_klubu (
+    p_nazwa_klubu IN KLUB.nazwa%TYPE
+) AS
+BEGIN
+    FOR rec IN (
+        SELECT m.imie, m.nazwisko, m.data_urodzenia, k.nazwa as nazwa_klubu
+        FROM MENADZER m
+        JOIN KLUB k ON m.id_klubu = k.id_klubu
+        WHERE k.nazwa = p_nazwa_klubu
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('Klub: ' || rec.nazwa_klubu || ', Menadżer: ' || rec.imie || ' ' || rec.nazwisko ||
+                             ', Data urodzenia: ' || TO_CHAR(rec.data_urodzenia));
+    END LOOP;
+END;
+
+BEGIN
+    pokaz_menadzera_klubu('Barcelona');
+END;

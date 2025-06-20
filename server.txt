@@ -220,6 +220,89 @@ END;
 
 exec WyswietlKluby;
 
+CREATE OR ALTER PROCEDURE dbo.DodajMenadzeraOracle
+    @imie NVARCHAR(50),
+    @nazwisko NVARCHAR(50),
+    @data_urodzenia DATE,
+    @klub NVARCHAR(100)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX);
+    DECLARE @data_str VARCHAR(10) = CONVERT(VARCHAR(10), @data_urodzenia, 120);
+
+    SET @sql =
+        'BEGIN SYSTEM.dodaj_menadzera(''' + REPLACE(@imie, '''', '''''') + ''','''
+        + REPLACE(@nazwisko, '''', '''''') + ''',TO_DATE(''' + @data_str + ''',''YYYY-MM-DD''),''' + REPLACE(@klub, '''', '''''') + '''); END;';
+
+    EXEC (@sql) AT ORACLE_LINK;
+END;
+
+EXEC dbo.DodajMenadzeraOracle 'Carlo', 'Ancelotti', '1959-06-10', 'Real Madrid';
+EXEC dbo.DodajMenadzeraOracle 'Xavi', 'Hernandez', '1980-01-25', 'Barcelona';
+EXEC dbo.DodajMenadzeraOracle 'Thomas', 'Tuchel', '1973-08-29', 'Bayern';
+EXEC dbo.DodajMenadzeraOracle 'Mikel', 'Arteta', '1982-03-26', 'Arsenal';
+EXEC dbo.DodajMenadzeraOracle 'Pep', 'Guardiola', '1971-01-18', 'Manchester City';
+EXEC dbo.DodajMenadzeraOracle 'Simone', 'Inzaghi', '1976-04-05', 'Inter Milan';
+
+CREATE OR ALTER PROCEDURE dbo.DodajZawodnikaOracle
+    @imie NVARCHAR(50),
+    @nazwisko NVARCHAR(50),
+    @data_urodzenia DATE,
+    @klub NVARCHAR(100)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX);
+    DECLARE @data_str VARCHAR(10) = CONVERT(VARCHAR(10), @data_urodzenia, 120);
+
+    SET @sql =
+        'BEGIN SYSTEM.dodaj_zawodnika(''' + REPLACE(@imie, '''', '''''') + ''','''
+        + REPLACE(@nazwisko, '''', '''''') + ''',TO_DATE(''' + @data_str + ''',''YYYY-MM-DD''),''' + REPLACE(@klub, '''', '''''') + '''); END;';
+
+    EXEC (@sql) AT ORACLE_LINK;
+END;
+
+EXEC dbo.DodajZawodnikaOracle 'Luka', 'Modric', '1985-09-09', 'Real Madrid';
+EXEC dbo.DodajZawodnikaOracle 'Toni', 'Kroos', '1990-01-04', 'Real Madrid';
+EXEC dbo.DodajZawodnikaOracle 'Vinicius', 'Junior', '2000-07-12', 'Real Madrid';
+EXEC dbo.DodajZawodnikaOracle 'Jude', 'Bellingham', '2003-06-29', 'Real Madrid';
+EXEC dbo.DodajZawodnikaOracle 'Antonio', 'Rudiger', '1993-03-03', 'Real Madrid';
+EXEC dbo.DodajZawodnikaOracle 'Thibaut', 'Courtois', '1992-05-11', 'Real Madrid';
+
+EXEC dbo.DodajZawodnikaOracle 'Robert', 'Lewandowski', '1988-08-21', 'Barcelona';
+EXEC dbo.DodajZawodnikaOracle 'Pedri', 'Gonzalez', '2002-11-25', 'Barcelona';
+EXEC dbo.DodajZawodnikaOracle 'Gavi', '', '2004-08-05', 'Barcelona';
+EXEC dbo.DodajZawodnikaOracle 'Marc-André', 'ter Stegen', '1992-04-30', 'Barcelona';
+EXEC dbo.DodajZawodnikaOracle 'Frenkie', 'de Jong', '1997-05-12', 'Barcelona';
+EXEC dbo.DodajZawodnikaOracle 'Jules', 'Kounde', '1998-11-12', 'Barcelona';
+
+EXEC dbo.DodajZawodnikaOracle 'Manuel', 'Neuer', '1986-03-27', 'Bayern';
+EXEC dbo.DodajZawodnikaOracle 'Joshua', 'Kimmich', '1995-02-08', 'Bayern';
+EXEC dbo.DodajZawodnikaOracle 'Jamal', 'Musiala', '2003-02-26', 'Bayern';
+EXEC dbo.DodajZawodnikaOracle 'Leroy', 'Sane', '1996-01-11', 'Bayern';
+EXEC dbo.DodajZawodnikaOracle 'Kingsley', 'Coman', '1996-06-13', 'Bayern';
+EXEC dbo.DodajZawodnikaOracle 'Dayot', 'Upamecano', '1998-10-27', 'Bayern';
+
+EXEC dbo.DodajZawodnikaOracle 'Bukayo', 'Saka', '2001-09-05', 'Arsenal';
+EXEC dbo.DodajZawodnikaOracle 'Martin', 'Odegaard', '1998-12-17', 'Arsenal';
+EXEC dbo.DodajZawodnikaOracle 'Aaron', 'Ramsdale', '1998-05-14', 'Arsenal';
+EXEC dbo.DodajZawodnikaOracle 'Gabriel', 'Martinelli', '2001-06-18', 'Arsenal';
+EXEC dbo.DodajZawodnikaOracle 'Declan', 'Rice', '1999-01-14', 'Arsenal';
+EXEC dbo.DodajZawodnikaOracle 'William', 'Saliba', '2001-03-24', 'Arsenal';
+
+EXEC dbo.DodajZawodnikaOracle 'Erling', 'Haaland', '2000-07-21', 'Manchester City';
+EXEC dbo.DodajZawodnikaOracle 'Kevin', 'De Bruyne', '1991-06-28', 'Manchester City';
+EXEC dbo.DodajZawodnikaOracle 'Phil', 'Foden', '2000-05-28', 'Manchester City';
+EXEC dbo.DodajZawodnikaOracle 'Ruben', 'Dias', '1997-05-14', 'Manchester City';
+EXEC dbo.DodajZawodnikaOracle 'Ederson', 'Moraes', '1993-08-17', 'Manchester City';
+EXEC dbo.DodajZawodnikaOracle 'Bernardo', 'Silva', '1994-08-10', 'Manchester City';
+
+EXEC dbo.DodajZawodnikaOracle 'Lautaro', 'Martinez', '1997-08-22', 'Inter Milan';
+EXEC dbo.DodajZawodnikaOracle 'Nicolo', 'Barella', '1997-02-07', 'Inter Milan';
+EXEC dbo.DodajZawodnikaOracle 'Hakan', 'Calhanoglu', '1994-02-08', 'Inter Milan';
+EXEC dbo.DodajZawodnikaOracle 'Federico', 'Dimarco', '1997-11-10', 'Inter Milan';
+EXEC dbo.DodajZawodnikaOracle 'Marcus', 'Thuram', '1997-08-06', 'Inter Milan';
+EXEC dbo.DodajZawodnikaOracle 'Yann', 'Sommer', '1988-12-17', 'Inter Milan';
+
 CREATE PROCEDURE WyswietlInfoOKlubie
     @nazwa_klubu NVARCHAR(100)
 AS

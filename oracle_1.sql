@@ -276,14 +276,6 @@ BEGIN
     VALUES (seq_menadzer.NEXTVAL, p_imie, p_nazwisko, p_data_urodzenia, v_id_klubu);
 END;
 
-BEGIN
-    dodaj_menadzera('Carlo', 'Ancelotti', TO_DATE('1959-06-10','YYYY-MM-DD'), 'Real Madrid');
-    dodaj_menadzera('Xavi', 'Hernandez', TO_DATE('1980-01-25','YYYY-MM-DD'), 'Barcelona');
-    dodaj_menadzera('Thomas', 'Tuchel', TO_DATE('1973-08-29','YYYY-MM-DD'), 'Bayern');
-    dodaj_menadzera('Mikel', 'Arteta', TO_DATE('1982-03-26','YYYY-MM-DD'), 'Arsenal');
-    dodaj_menadzera('Pep', 'Guardiola', TO_DATE('1971-01-18','YYYY-MM-DD'), 'Manchester City');
-    dodaj_menadzera('Simone', 'Inzaghi', TO_DATE('1976-04-05','YYYY-MM-DD'), 'Inter Milan');
-END;
 SELECT * FROM Menadzer;
 
 CREATE OR REPLACE PROCEDURE zmien_klub_menadzera(
@@ -319,57 +311,6 @@ BEGIN
 
     INSERT INTO Zawodnicy (id_zawodnika, imie, nazwisko, data_urodzenia, id_klubu)
     VALUES (seq_zawodnik.NEXTVAL, p_imie, p_nazwisko, p_data_ur, v_id_klubu);
-END;
-
-BEGIN
-    BEGIN
-    -- Real Madrid
-    dodaj_zawodnika('Luka', 'Modric', TO_DATE('1985-09-09','YYYY-MM-DD'), 'Real Madrid');
-    dodaj_zawodnika('Toni', 'Kroos', TO_DATE('1990-01-04','YYYY-MM-DD'), 'Real Madrid');
-    dodaj_zawodnika('Vinicius', 'Junior', TO_DATE('2000-07-12','YYYY-MM-DD'), 'Real Madrid');
-    dodaj_zawodnika('Jude', 'Bellingham', TO_DATE('2003-06-29','YYYY-MM-DD'), 'Real Madrid');
-    dodaj_zawodnika('Antonio', 'Rudiger', TO_DATE('1993-03-03','YYYY-MM-DD'), 'Real Madrid');
-    dodaj_zawodnika('Thibaut', 'Courtois', TO_DATE('1992-05-11','YYYY-MM-DD'), 'Real Madrid');
-
-    -- Barcelona
-    dodaj_zawodnika('Robert', 'Lewandowski', TO_DATE('1988-08-21','YYYY-MM-DD'), 'Barcelona');
-    dodaj_zawodnika('Pedri', 'Gonzalez', TO_DATE('2002-11-25','YYYY-MM-DD'), 'Barcelona');
-    dodaj_zawodnika('Gavi', '', TO_DATE('2004-08-05','YYYY-MM-DD'), 'Barcelona');
-    dodaj_zawodnika('Marc-André', 'ter Stegen', TO_DATE('1992-04-30','YYYY-MM-DD'), 'Barcelona');
-    dodaj_zawodnika('Frenkie', 'de Jong', TO_DATE('1997-05-12','YYYY-MM-DD'), 'Barcelona');
-    dodaj_zawodnika('Jules', 'Kounde', TO_DATE('1998-11-12','YYYY-MM-DD'), 'Barcelona');
-
-    -- Bayern
-    dodaj_zawodnika('Manuel', 'Neuer', TO_DATE('1986-03-27','YYYY-MM-DD'), 'Bayern');
-    dodaj_zawodnika('Joshua', 'Kimmich', TO_DATE('1995-02-08','YYYY-MM-DD'), 'Bayern');
-    dodaj_zawodnika('Jamal', 'Musiala', TO_DATE('2003-02-26','YYYY-MM-DD'), 'Bayern');
-    dodaj_zawodnika('Leroy', 'Sane', TO_DATE('1996-01-11','YYYY-MM-DD'), 'Bayern');
-    dodaj_zawodnika('Kingsley', 'Coman', TO_DATE('1996-06-13','YYYY-MM-DD'), 'Bayern');
-    dodaj_zawodnika('Dayot', 'Upamecano', TO_DATE('1998-10-27','YYYY-MM-DD'), 'Bayern');
-
-    -- Arsenal
-    dodaj_zawodnika('Bukayo', 'Saka', TO_DATE('2001-09-05','YYYY-MM-DD'), 'Arsenal');
-    dodaj_zawodnika('Martin', 'Odegaard', TO_DATE('1998-12-17','YYYY-MM-DD'), 'Arsenal');
-    dodaj_zawodnika('Aaron', 'Ramsdale', TO_DATE('1998-05-14','YYYY-MM-DD'), 'Arsenal');
-    dodaj_zawodnika('Gabriel', 'Martinelli', TO_DATE('2001-06-18','YYYY-MM-DD'), 'Arsenal');
-    dodaj_zawodnika('Declan', 'Rice', TO_DATE('1999-01-14','YYYY-MM-DD'), 'Arsenal');
-    dodaj_zawodnika('William', 'Saliba', TO_DATE('2001-03-24','YYYY-MM-DD'), 'Arsenal');
-
-    -- Manchester City
-    dodaj_zawodnika('Erling', 'Haaland', TO_DATE('2000-07-21','YYYY-MM-DD'), 'Manchester City');
-    dodaj_zawodnika('Kevin', 'De Bruyne', TO_DATE('1991-06-28','YYYY-MM-DD'), 'Manchester City');
-    dodaj_zawodnika('Phil', 'Foden', TO_DATE('2000-05-28','YYYY-MM-DD'), 'Manchester City');
-    dodaj_zawodnika('Ruben', 'Dias', TO_DATE('1997-05-14','YYYY-MM-DD'), 'Manchester City');
-    dodaj_zawodnika('Ederson', 'Moraes', TO_DATE('1993-08-17','YYYY-MM-DD'), 'Manchester City');
-    dodaj_zawodnika('Bernardo', 'Silva', TO_DATE('1994-08-10','YYYY-MM-DD'), 'Manchester City');
-
-    -- Inter Milan
-    dodaj_zawodnika('Lautaro', 'Martinez', TO_DATE('1997-08-22','YYYY-MM-DD'), 'Inter Milan');
-    dodaj_zawodnika('Nicolo', 'Barella', TO_DATE('1997-02-07','YYYY-MM-DD'), 'Inter Milan');
-    dodaj_zawodnika('Hakan', 'Calhanoglu', TO_DATE('1994-02-08','YYYY-MM-DD'), 'Inter Milan');
-    dodaj_zawodnika('Federico', 'Dimarco', TO_DATE('1997-11-10','YYYY-MM-DD'), 'Inter Milan');
-    dodaj_zawodnika('Marcus', 'Thuram', TO_DATE('1997-08-06','YYYY-MM-DD'), 'Inter Milan');
-    dodaj_zawodnika('Yann', 'Sommer', TO_DATE('1988-12-17','YYYY-MM-DD'), 'Inter Milan');
 END;
 
 SELECT z.imie, z.nazwisko, z.data_urodzenia, k.nazwa AS klub

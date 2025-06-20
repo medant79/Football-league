@@ -586,6 +586,33 @@ EXEC PobierzZawodnikaZeStatystykami 'Robert', 'Lewandowski', '1988-08-21';
 EXEC PobierzZawodnikaZeStatystykami 'Pedri', 'Gonzalez', '2002-11-25';
 EXEC PobierzZawodnikaZeStatystykami 'William', 'Saliba', '2001-03-24';
 
+
+CREATE OR ALTER PROCEDURE dbo.DodajSedziegoZdalnie
+    @imie NVARCHAR(50),
+    @nazwisko NVARCHAR(50),
+    @data_urodzenia DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @data_str VARCHAR(10) = CONVERT(VARCHAR(10), @data_urodzenia, 120);
+    DECLARE @sql NVARCHAR(MAX);
+
+    SET @sql = 'EXEC master.dbo.DodajSedziego ''' 
+             + REPLACE(@imie, '''', '''''') + ''', ''' 
+             + REPLACE(@nazwisko, '''', '''''') + ''', ''' 
+             + @data_str + '''';
+
+    EXEC (@sql) AT DOCKER_SQL;
+END;
+
+EXEC dbo.DodajSedziegoZdalnie 'Piotr', 'Nowak', '1980-05-14';
+EXEC dbo.DodajSedziegoZdalnie 'Marek', 'Kowalski', '1975-11-22';
+EXEC dbo.DodajSedziegoZdalnie 'Tomasz', 'Wiśniewski', '1988-03-30';
+EXEC dbo.DodajSedziegoZdalnie 'Andrzej', 'Lewandowski', '1982-07-08';
+EXEC dbo.DodajSedziegoZdalnie 'Krzysztof', 'Zieliński', '1979-01-19';
+EXEC dbo.DodajSedziegoZdalnie 'Marcin', 'Kamiński', '1990-12-05';
+
 CREATE OR ALTER PROCEDURE dbo.DodajSedziegoDoMeczuPoNazwach
     @nazwa_gospodarza    NVARCHAR(100),
     @nazwa_goscia        NVARCHAR(100),
@@ -639,13 +666,13 @@ BEGIN
 
     IF @id_sedziego IS NULL
     BEGIN
-        DECLARE @sql_insert NVARCHAR(MAX) = 
-            'INSERT INTO master.dbo.Sedziowie (imie, nazwisko, data_urodzenia) VALUES (''' 
-            + REPLACE(@imie_sedziego,'''','''''') + ''',''' 
-            + REPLACE(@nazwisko_sedziego,'''','''''') + ''',''' 
-            + @data_ur_sedziego_str + ''')';
+        DECLARE @sql_call_proc NVARCHAR(MAX) = 
+	'EXEC master.dbo.DodajSedziego ''' 
+	+ REPLACE(@imie_sedziego,'''','''''') + ''', ''' 
+	+ REPLACE(@nazwisko_sedziego,'''','''''') + ''', ''' 
+	+ @data_ur_sedziego_str + '''';
 
-        EXEC (@sql_insert) AT DOCKER_SQL;
+	EXEC (@sql_call_proc) AT DOCKER_SQL;
 
         SELECT @id_sedziego = id_sedziego
         FROM OPENQUERY(DOCKER_SQL,

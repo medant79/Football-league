@@ -429,12 +429,14 @@ CREATE PROCEDURE DodajMeczPoNazwach
     @godzina TIME,
     @nazwa_gospodarza NVARCHAR(100),
     @nazwa_goscia NVARCHAR(100),
-    @id_stadionu INT = NULL,
+    @nazwa_stadionu NVARCHAR(100) = NULL,
     @wynik NVARCHAR(20) = NULL
 AS
 BEGIN
     DECLARE @id_gospodarza INT;
     DECLARE @id_goscia INT;
+    DECLARE @id_stadionu INT;
+    DECLARE @status_stadionu INT;
 
     SELECT @id_gospodarza = id_klubu
     FROM OPENQUERY(ORACLE_LINK, 
@@ -452,15 +454,16 @@ BEGIN
         RETURN;
     END
 
-    IF @id_stadionu IS NOT NULL
+    IF @nazwa_stadionu IS NOT NULL
     BEGIN
-        SELECT @status_stadionu = status
+        SELECT @id_stadionu = id_stadionu,
+	       @status_stadionu = status
         FROM Stadiony
-        WHERE id_stadionu = @id_stadionu;
+        WHERE nazwa = @nazwa_stadionu;
 
-        IF @status_stadionu IS NULL
+        IF @id_stadionu IS NULL
         BEGIN
-            RAISERROR('Nie znaleziono stadionu o podanym ID.', 16, 1);
+            RAISERROR('Nie znaleziono stadionu o podanej nazwie.', 16, 1);
             RETURN;
         END
 
@@ -475,13 +478,13 @@ BEGIN
     VALUES (@data_meczu, @godzina, @id_gospodarza, @id_goscia, @id_stadionu, @wynik);
 END;
 
-EXEC DodajMeczPoNazwach '2025-08-01', '18:00', 'Real Madrid', 'Barcelona', 1, '1:3';
-EXEC DodajMeczPoNazwach '2025-08-02', '20:00', 'Bayern', 'Arsenal', 3, '2:1';
-EXEC DodajMeczPoNazwach '2025-08-03', '17:30', 'Manchester City', 'Inter Milan', 5, '2:2';
-EXEC DodajMeczPoNazwach '2025-08-04', '19:00', 'Arsenal', 'Real Madrid', 4, '1:1';
-EXEC DodajMeczPoNazwach '2025-08-05', '21:00', 'Barcelona', 'Manchester City', 7, '5:0';
-EXEC DodajMeczPoNazwach '2025-08-06', '18:30', 'Inter Milan', 'Bayern', 6, '0:0';
-EXEC DodajMeczPoNazwach '2025-08-07', '20:45', 'Real Madrid', 'Manchester City', 1, '4:4';
+EXEC DodajMeczPoNazwach '2025-08-01', '18:00', 'Real Madrid', 'Barcelona', 'Santiago Bernabéu', '1:3';
+EXEC DodajMeczPoNazwach '2025-08-02', '20:00', 'Bayern', 'Arsenal', 'Allianz Arena', '2:1';
+EXEC DodajMeczPoNazwach '2025-08-03', '17:30', 'Manchester City', 'Inter Milan', 'Etihad Stadium', '2:2';
+EXEC DodajMeczPoNazwach '2025-08-04', '19:00', 'Arsenal', 'Real Madrid', 'Emirates Stadium', '1:1';
+EXEC DodajMeczPoNazwach '2025-08-05', '21:00', 'Barcelona', 'Manchester City', 'Old Trafford', '5:0';
+EXEC DodajMeczPoNazwach '2025-08-06', '18:30', 'Inter Milan', 'Bayern', 'San Siro', '0:0';
+EXEC DodajMeczPoNazwach '2025-08-07', '20:45', 'Real Madrid', 'Manchester City', 'Santiago Bernabéu', '4:4';
 
 select * from Mecze;
 

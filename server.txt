@@ -674,27 +674,7 @@ BEGIN
     DECLARE @data_ur_sedziego_str CHAR(10) = CONVERT(CHAR(10), @data_ur_sedziego, 120);
     DECLARE @data_meczu_str CHAR(10) = CONVERT(CHAR(10), @data_meczu, 120);
 
-    SELECT @id_gosp = id_klubu
-    FROM OPENQUERY(ORACLE_LINK,
-        'SELECT id_klubu, nazwa FROM SYSTEM.KLUB')
-    WHERE nazwa = @nazwa_gospodarza;
-
-    SELECT @id_gosc = id_klubu
-    FROM OPENQUERY(ORACLE_LINK,
-        'SELECT id_klubu, nazwa FROM SYSTEM.KLUB')
-    WHERE nazwa = @nazwa_goscia;
-
-    IF @id_gosp IS NULL OR @id_gosc IS NULL
-    BEGIN
-        RAISERROR('Nie znaleziono jednej z drużyn w Oracle.', 16, 1);
-        RETURN;
-    END
-
-    SELECT TOP 1 @id_meczu = id_meczu
-    FROM dbo.Mecze
-    WHERE id_gospodarza = @id_gosp
-      AND id_goscia = @id_gosc
-      AND data_meczu = @data_meczu;
+    SELECT @id_meczu = dbo.detect_match_id(@nazwa_gospodarza, @nazwa_goscia, @data_meczu);
 
     IF @id_meczu IS NULL
     BEGIN

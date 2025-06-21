@@ -595,13 +595,13 @@ BEGIN
     VALUES (@id_meczu, @minuta, @typ_wydarzenia, @id_zawodnika, @dodatkowe_info);
 END;
 
-EXEC DodajWydarzenieMeczowe 1, 15, 'gol', 'Robert', 'Lewandowski', '1988-08-21', 'Prawa noga z pola karnego';
-EXEC DodajWydarzenieMeczowe 1, 22, 'gol', 'Vinicius', 'Junior', '2000-07-12', 'Kontra z lewej strony';
-EXEC DodajWydarzenieMeczowe 1, 15, 'asysta', 'Pedri', 'Gonzalez', '2002-11-25', NULL;
-EXEC DodajWydarzenieMeczowe 1, 22, 'asysta', 'Luka', 'Modric', '1985-09-09', NULL;
-EXEC DodajWydarzenieMeczowe 2, 38, 'zolta kartka', 'Dayot', 'Upamecano', '1998-10-27', 'Faul taktyczny';
-EXEC DodajWydarzenieMeczowe 2, 55, 'czerwona kartka', 'William', 'Saliba', '2001-03-24', 'Faul jako ostatni obrońca';
-EXEC DodajWydarzenieMeczowe 1, 90, 'koniec', NULL, NULL, NULL, 'Sędzia zakończył mecz';
+EXEC DodajWydarzenieMeczowe 'Real Madrid', 'Barcelona', '2025-08-01', 15, 'gol', 'Robert', 'Lewandowski', '1988-08-21', 'Prawa noga z pola karnego';
+EXEC DodajWydarzenieMeczowe 'Real Madrid', 'Barcelona', '2025-08-01', 22, 'gol', 'Vinicius', 'Junior', '2000-07-12', 'Kontra z lewej strony';
+EXEC DodajWydarzenieMeczowe 'Real Madrid', 'Barcelona', '2025-08-01', 15, 'asysta', 'Pedri', 'Gonzalez', '2002-11-25', NULL;
+EXEC DodajWydarzenieMeczowe 'Real Madrid', 'Barcelona', '2025-08-01', 22, 'asysta', 'Luka', 'Modric', '1985-09-09', NULL;
+EXEC DodajWydarzenieMeczowe 'Bayern', 'Arsenal', '2025-08-02', 38, 'zolta kartka', 'Dayot', 'Upamecano', '1998-10-27', 'Faul taktyczny';
+EXEC DodajWydarzenieMeczowe 'Bayern', 'Arsenal', '2025-08-02', 55, 'czerwona kartka', 'William', 'Saliba', '2001-03-24', 'Faul jako ostatni obrońca';
+EXEC DodajWydarzenieMeczowe 'Real Madrid', 'Barcelona', '2025-08-01', 90, 'koniec', NULL, NULL, NULL, 'Sędzia zakończył mecz';
 
 select * from WydarzeniaMeczowe
 

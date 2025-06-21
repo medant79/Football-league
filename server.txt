@@ -488,8 +488,41 @@ EXEC DodajMeczPoNazwach '2025-08-07', '20:45', 'Real Madrid', 'Manchester City',
 
 select * from Mecze;
 
-CREATE PROCEDURE DodajWydarzenieMeczowe
-    @id_meczu INT,
+CREATE OR ALTER FUNCTION dbo.detect_match_id
+(
+    @nazwa_gospodarza NVARCHAR(100),
+    @nazwa_goscia    NVARCHAR(100),
+    @data_meczu      DATE
+)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @match_id INT;
+
+    SELECT 
+        @match_id = m.id_meczu
+    FROM dbo.Mecze AS m
+    INNER JOIN 
+        OPENQUERY(ORACLE_LINK,
+          'SELECT id_klubu, nazwa FROM SYSTEM.Klub' 
+        ) AS kg
+      ON m.id_gospodarza = kg.id_klubu
+      AND kg.nazwa = @nazwa_gospodarza
+    INNER JOIN 
+        OPENQUERY(ORACLE_LINK,
+          'SELECT id_klubu, nazwa FROM SYSTEM.Klub' 
+        ) AS kk 
+      ON m.id_goscia = kk.id_klubu
+      AND kk.nazwa = @nazwa_goscia
+    WHERE m.data_meczu = @data_meczu;
+
+    RETURN @match_id; 
+END;
+
+CREATE OR ALTER PROCEDURE DodajWydarzenieMeczowe
+    @nazwa_gospodarza NVARCHAR(100),
+    @nazwa_goscia NVARCHAR(100),
+    @data_meczu DATE,
     @minuta INT,
     @typ_wydarzenia NVARCHAR(50),
     @imie NVARCHAR(50) = NULL,
@@ -500,7 +533,16 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    DECLARE @id_meczu INT;
     DECLARE @id_zawodnika INT = NULL;
+
+    SELECT @id_meczu = dbo.detect_match_id(@nazwa_gospodarza, @nazwa_goscia, @data_meczu);
+
+    IF @id_meczu IS NULL
+    BEGIN
+        RAISERROR('Nie znaleziono meczu o podanych danych.', 16, 1);
+        RETURN;
+    END
 
     IF @minuta < 0 OR @minuta > 120
     BEGIN
@@ -551,7 +593,7 @@ BEGIN
 
     INSERT INTO WydarzeniaMeczowe (id_meczu, minuta, typ_wydarzenia, id_zawodnika, dodatkowe_info)
     VALUES (@id_meczu, @minuta, @typ_wydarzenia, @id_zawodnika, @dodatkowe_info);
-END
+END;
 
 EXEC DodajWydarzenieMeczowe 1, 15, 'gol', 'Robert', 'Lewandowski', '1988-08-21', 'Prawa noga z pola karnego';
 EXEC DodajWydarzenieMeczowe 1, 22, 'gol', 'Vinicius', 'Junior', '2000-07-12', 'Kontra z lewej strony';

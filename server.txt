@@ -216,7 +216,7 @@ BEGIN
     DECLARE @sql NVARCHAR(MAX);
 
     SET @sql =
-        'INSERT INTO SYSTEM.Klub (nazwa) VALUES (''' + REPLACE(@nazwa_klubu, '''', '''''') + ''')';
+        'BEGIN SYSTEM.dodaj_klub(''' + REPLACE(@nazwa_klubu, '''', '''''') + '''); END;';
 
     EXEC (@sql) AT ORACLE_LINK;
 END;

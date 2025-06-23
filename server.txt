@@ -209,6 +209,25 @@ END;
 
 --procedury
 
+CREATE OR ALTER PROCEDURE dbo.DodajKlubOracle
+    @nazwa_klubu NVARCHAR(100)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX);
+
+    SET @sql =
+        'INSERT INTO SYSTEM.Klub (nazwa) VALUES (''' + REPLACE(@nazwa_klubu, '''', '''''') + ''')';
+
+    EXEC (@sql) AT ORACLE_LINK;
+END;
+
+exec dbo.DodajKlubOracle @nazwa_klubu = N'Real Madrid';
+exec dbo.DodajKlubOracle @nazwa_klubu = N'Barcelona';
+exec dbo.DodajKlubOracle @nazwa_klubu = N'Bayern';
+exec dbo.DodajKlubOracle @nazwa_klubu = N'Arsenal';
+exec dbo.DodajKlubOracle @nazwa_klubu = N'Manchester City';
+exec dbo.DodajKlubOracle @nazwa_klubu = N'Inter Milan';
+
 CREATE PROCEDURE WyswietlKluby
 AS
 BEGIN

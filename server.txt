@@ -408,7 +408,7 @@ EXEC wywolaj_zmiane_klubu_menadzera
     @imie = 'Carlo',
     @nazwisko = 'Ancelotti',
     @data_urodzenia = '1959-06-10',
-    @nazwa_klubu = 'Inter';
+    @nazwa_klubu = 'Inter Milan';
 
 CREATE PROCEDURE DodajStadion
     @nazwa NVARCHAR(100),

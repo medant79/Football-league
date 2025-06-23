@@ -383,7 +383,7 @@ EXEC wywolaj_przeniesienie_zawodnika
     @imie = 'Luka',
     @nazwisko = 'Modric',
     @data_urodzenia = '1985-09-09',
-    @nazwa_klubu = 'Inter';
+    @nazwa_klubu = 'Inter Milan';
 
 CREATE PROCEDURE wywolaj_zmiane_klubu_menadzera
     @imie NVARCHAR(100),

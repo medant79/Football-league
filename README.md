@@ -10,11 +10,9 @@ Projekt rozproszonej bazy danych powinien zawierać opracowaną strukturę skła
 
     - dostęp SQLServer – ORACLE  
 
-    - dostęp SQLServer – Access 
-
     - dostęp SQLServer – *.xls   
 
- - wielodostęp w dowolnej konfiguracji SQLServer - ORACLE_Access, *.xls (sprzeganie jednoocześnie różnych źródeł danych) 
+ - wielodostęp w dowolnej konfiguracji SQLServer - ORACLE, *.xls (sprzeganie jednoocześnie różnych źródeł danych) 
 
 - dostęp do zdalnych źródeł powinien odbywać się przez pisanie widoków i procedur rozproszonych (rzutowanie różnych typów danych i posługiwanie się funkcjami agregującymi zdalnymi i lokalnymi)
 

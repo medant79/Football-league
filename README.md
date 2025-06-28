@@ -24,8 +24,6 @@ Projekt rozproszonej bazy danych powinien zawierać opracowaną strukturę skła
 
     - linkowanie serwerów:  SQLServer – ORACLE (tylko od strony SQL Server do Oracle) 
 
-    - linkowanie serwerów:  SQLServer – Access
-
     - linkowanie serwerów:  SQLServer – *.xls  
 
  - dostęp do zdalnych źródeł powinien odbywać się przez pisanie widoków i procedur rozproszonych  przy ustanowionych serwerach zdalnych (wielodostęp w środowiskach heterogenicznych)
